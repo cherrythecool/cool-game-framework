@@ -11,16 +11,23 @@ const WindowState = struct {
 fn window_proc(hwnd: win32.HWND, message: win32.UINT, w_param: win32.WPARAM, l_param: win32.LPARAM) callconv(.c) win32.LRESULT {
     switch (message) {
         win32.WM_CREATE => {
-            _ = win32.SetWindowLongPtrA(hwnd, win32.GWLP_USERDATA, l_param);
+            const state: ?*win32.CREATESTRUCTA = @ptrFromInt(@as(usize, @intCast(l_param)));
+            if (state) |s| {
+                _ = win32.SetWindowLongPtrA(hwnd, win32.GWLP_USERDATA, @intCast(@intFromPtr(s.lpCreateParams)));
+            }
+
             return 0;
         },
         win32.WM_CLOSE => {
-            std.debug.print("{}\n", .{win32.GetWindowLongPtrA(hwnd, win32.GWLP_USERDATA)});
+            const state: ?*WindowState = @ptrFromInt(@as(usize, @intCast(win32.GetWindowLongPtrA(hwnd, win32.GWLP_USERDATA))));
+            if (state) |s| {
+                s.running = false;
+            }
+
             _ = win32.DestroyWindow(hwnd);
             return 0;
         },
         win32.WM_DESTROY => {
-            win32.PostQuitMessage(0);
             return 0;
         },
         else => return win32.DefWindowProcA(hwnd, message, w_param, l_param),
@@ -90,10 +97,6 @@ pub fn main(init: std.process.Init) !void {
             _ = win32.DispatchMessageA(&message);
 
             found_message = win32.PeekMessageA(&message, null, 0, 0, win32.PM_REMOVE) != 0;
-        }
-
-        if (message.message == win32.WM_QUIT) {
-            state.running = false;
         }
     }
 }
