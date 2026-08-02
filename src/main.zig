@@ -6,7 +6,7 @@ pub fn main(init: std.process.Init) !void {
     _ = init;
 
     var main_window = Window.init;
-    try main_window.setup(1280, 720, "hello!");
+    try main_window.setup(1280, 720, "cool game");
 
     while (!main_window.shouldClose()) {
         _ = main_window.poll();

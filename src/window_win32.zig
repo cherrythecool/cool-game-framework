@@ -102,7 +102,7 @@ pub fn shouldClose(self: Self) bool {
     return !self.running;
 }
 
-pub fn proc(hwnd: windows.c.HWND, message: windows.c.UINT, w_param: windows.c.WPARAM, l_param: windows.c.LPARAM) callconv(.c) windows.c.LRESULT {
+fn proc(hwnd: windows.c.HWND, message: windows.c.UINT, w_param: windows.c.WPARAM, l_param: windows.c.LPARAM) callconv(.c) windows.c.LRESULT {
     switch (message) {
         windows.c.WM_CREATE => {
             const create_struct: ?*windows.c.CREATESTRUCTA = @ptrFromInt(@as(usize, @intCast(l_param)));
