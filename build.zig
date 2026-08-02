@@ -14,6 +14,33 @@ pub fn build(b: *std.Build) void {
         .needed = true,
     });
 
+    const glad_lib = b.addLibrary(.{
+        .name = "glad",
+        .linkage = .static,
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        }),
+    });
+
+    glad_lib.root_module.addIncludePath(b.path("src/glad_vk/include/"));
+    glad_lib.root_module.addCSourceFile(.{
+        .file = b.path("src/glad_vk/src/vulkan.c"),
+        .language = .c,
+    });
+
+    const glad_translation = b.addTranslateC(.{
+        .root_source_file = b.path("src/glad_vk/include/glad/vulkan.h"),
+        .target = target,
+        .optimize = optimize,
+    });
+
+    glad_translation.addIncludePath(b.path("src/glad_vk/include/"));
+
+    const glad_mod = glad_translation.createModule();
+    glad_mod.linkLibrary(glad_lib);
+
     var exe = b.addExecutable(.{
         .name = "cool_game_framework",
         .root_module = b.createModule(.{
@@ -24,6 +51,10 @@ pub fn build(b: *std.Build) void {
                 .{
                     .name = "win32",
                     .module = win32_translation.createModule(),
+                },
+                .{
+                    .name = "glad",
+                    .module = glad_mod,
                 },
             },
         }),
