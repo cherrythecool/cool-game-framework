@@ -1,7 +1,7 @@
+const Self = @This();
 const std = @import("std");
 const window_global = @import("window.zig");
 const windows = @import("windows.zig");
-const Self = @This();
 const class_name = "cgfWindow";
 
 pub const init: Self = .{};
