@@ -10,8 +10,21 @@ int main(void) {
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("test", 1280, 720, SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("i like audio", 800, 600, SDL_WINDOW_RESIZABLE);
+    if (window == nullptr) {
+        std::cerr << "sdl create window err: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
     SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
+    if (renderer == nullptr) {
+        std::cerr << "sdl create renderer err: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 
     bool running = true;
     SDL_Event event;
