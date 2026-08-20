@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include "SDL3/SDL.h"
-#include "time_constants.hpp"
+#include "core/time_constants.hpp"
 
 SDL3Platform::SDL3Platform() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {

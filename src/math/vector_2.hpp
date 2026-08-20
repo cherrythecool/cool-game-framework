@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include "math/numbers.hpp"
 
 struct Vector2i {
     int32_t x = 0;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "color.hpp"
+#include "math/color.hpp"
 
 class Renderer {
     protected:
@@ -11,4 +11,6 @@ class Renderer {
         virtual void setClearColor(const Color8 clearColor) = 0;
         virtual void clear() = 0;
         virtual void swapBuffers() = 0;
+
+
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include "math/numbers.hpp"
 
 struct Color8 {
     uint8_t r = 0;

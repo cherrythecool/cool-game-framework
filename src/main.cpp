@@ -1,37 +1,34 @@
 #include <iostream>
 
-#include "color.hpp"
-#include "vectors.hpp"
-#include "platform.hpp"
-#include "window.hpp"
-#include "renderer.hpp"
-
-#include "drivers/sdl3/sdl3_platform.hpp"
-#include "drivers/sdl3/sdl3_window.hpp"
-#include "drivers/sdl3/sdl3_renderer.hpp"
+#include "core/application.hpp"
 
 int main(void) {
-    SDL3Platform platform = SDL3Platform();
-    SDL3Window window = SDL3Window("cool game!", {800, 600}, {});
-    SDL3Renderer renderer = SDL3Renderer(window);
+    Application app = Application({
+        "test",
+        ApplicationPlatform::SDL3,
+    });
 
-    float64_t start = platform.getTimeSeconds();
-    uint64_t frames = 0;
+    // SDL3Platform platform = SDL3Platform();
+    // SDL3Window window = SDL3Window("cool game!", {800, 600}, {});
+    // SDL3Renderer renderer = SDL3Renderer(window);
 
-    while (!platform.requestedClose()) {
-        platform.pollEvents();
+    // float64_t start = platform.getTimeSeconds();
+    // uint64_t frames = 0;
 
-        frames++;
-        if (platform.getTimeSeconds() - start >= 1.0) {
-            std::cout << frames << " FPS\n";
-            frames = 0;
-            start = platform.getTimeSeconds();
-        }
+    // while (!platform.requestedClose()) {
+    //     platform.pollEvents();
 
-        renderer.setClearColor({77, 77, 77});
-        renderer.clear();
-        renderer.swapBuffers();
-    }
+    //     frames++;
+    //     if (platform.getTimeSeconds() - start >= 1.0) {
+    //         std::cout << frames << " FPS\n";
+    //         frames = 0;
+    //         start = platform.getTimeSeconds();
+    //     }
+
+    //     renderer.setClearColor({77, 77, 77});
+    //     renderer.clear();
+    //     renderer.swapBuffers();
+    // }
 
     return 0;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "number_types.hpp"
+#include "math/numbers.hpp"
 
 class Platform {
     protected:

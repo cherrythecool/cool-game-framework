@@ -1,7 +1,7 @@
 #pragma once
 
-#include "vectors.hpp"
 #include <string>
+#include "math/vector_2.hpp"
 
 struct WindowFlags {
     bool resizable = true;

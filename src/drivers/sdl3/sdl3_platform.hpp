@@ -1,8 +1,8 @@
 #pragma once
 
-#include "platform.hpp"
+#include "core/platform.hpp"
 
-class SDL3Platform final : Platform {
+class SDL3Platform final : public Platform {
     protected:
         bool hasRequestedClose = false;
 
