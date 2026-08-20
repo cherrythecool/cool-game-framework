@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "SDL3/SDL.h"
+#include "time_constants.hpp"
 
 SDL3Platform::SDL3Platform() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -25,4 +26,12 @@ void SDL3Platform::pollEvents() {
 
 bool SDL3Platform::requestedClose() {
     return hasRequestedClose;
+}
+
+float64_t SDL3Platform::getTimeSeconds() {
+    return static_cast<float64_t>(getTimeNS()) / NS_PER_SECOND;
+}
+
+uint64_t SDL3Platform::getTimeNS() {
+    return SDL_GetTicksNS();
 }

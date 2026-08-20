@@ -12,4 +12,7 @@ class SDL3Platform final : Platform {
 
         void pollEvents() override;
         bool requestedClose() override;
+
+        float64_t getTimeSeconds() override;
+        uint64_t getTimeNS() override;
 };
