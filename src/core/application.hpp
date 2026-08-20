@@ -25,9 +25,9 @@ struct ApplicationConfig {
 
 class Application {
     protected:
-        std::unique_ptr<Platform> platform;
-        std::unique_ptr<Window> window;
-        std::unique_ptr<Renderer> renderer;
+        std::unique_ptr<Platform> platform = nullptr;
+        std::unique_ptr<Window> window = nullptr;
+        std::unique_ptr<Renderer> renderer = nullptr;
 
         std::string_view name;
 

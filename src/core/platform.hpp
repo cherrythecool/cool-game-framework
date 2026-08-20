@@ -5,9 +5,10 @@
 class Platform {
     protected:
         Platform() {}
-        virtual ~Platform() = default;
-    
+        
     public:
+        virtual ~Platform() = default;
+
         virtual void pollEvents() = 0;
         virtual bool requestedClose() = 0;
 
