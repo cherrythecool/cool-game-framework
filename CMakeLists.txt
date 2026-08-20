@@ -11,6 +11,10 @@ add_subdirectory(vendor/SDL3)
 
 add_executable(cgf
     src/main.cpp
+
+    src/drivers/sdl3/sdl3_platform.cpp
+    src/drivers/sdl3/sdl3_window.cpp
+    src/drivers/sdl3/sdl3_renderer.cpp
 )
 
 target_include_directories(cgf PUBLIC src/)
