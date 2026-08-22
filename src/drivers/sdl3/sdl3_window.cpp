@@ -55,7 +55,8 @@ std::unique_ptr<Renderer> SDL3Window::initRenderer(const ApplicationRenderer req
     switch (requestedRenderer) {
         case ApplicationRenderer::DEFAULT:
         case ApplicationRenderer::SDL3_RENDERER:
-            return std::make_unique<SDL3Renderer>(*this);
             break;
     }
+
+    return std::make_unique<SDL3Renderer>(*this);
 }
