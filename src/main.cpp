@@ -4,11 +4,11 @@
 
 int main(void) {
     Application app = Application({
-        "test",
+        "cool-game-framework - testing",
         ApplicationPlatform::SDL3,
         ApplicationRenderer::SDL3_RENDERER,
         true,
-        {640, 480},
+        {800, 600},
     });
 
     app.run();

@@ -30,6 +30,9 @@ void Application::run() {
         platform->pollEvents();
 
         renderer->clear();
+
+		renderer->drawRect({64, 64, 128, 128}, {255, 0, 128});
+        
         renderer->swapBuffers();
     }
 }
