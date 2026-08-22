@@ -7,11 +7,15 @@
 Application::Application(const ApplicationConfig config) {
     name = std::string_view(config.name);
     
+    const WindowFlags windowFlags = WindowFlags {
+        config.resizable,
+    };
+
     switch (config.requestedPlatform) {
         case ApplicationPlatform::DEFAULT:
         case ApplicationPlatform::SDL3:
             platform = std::make_unique<SDL3Platform>();
-            window = std::make_unique<SDL3Window>(config.name, config.size, WindowFlags {});
+            window = std::make_unique<SDL3Window>(config.name, config.size, windowFlags);
             break;
     }
     

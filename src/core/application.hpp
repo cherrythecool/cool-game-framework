@@ -15,6 +15,7 @@ struct ApplicationConfig {
     const char* name = nullptr;
     const ApplicationPlatform requestedPlatform = ApplicationPlatform::DEFAULT;
     const ApplicationRenderer requestedRenderer = ApplicationRenderer::DEFAULT;
+    const bool resizable = true;
     const Vector2i size = {800, 600};
     const Color8 clearColor = {48, 48, 48, 255};
 };
