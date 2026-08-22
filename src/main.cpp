@@ -6,7 +6,11 @@ int main(void) {
     Application app = Application({
         "test",
         ApplicationPlatform::SDL3,
+        ApplicationRenderer::SDL3_RENDERER,
+        {640, 480},
     });
+
+    app.run();
 
     // SDL3Platform platform = SDL3Platform();
     // SDL3Window window = SDL3Window("cool game!", {800, 600}, {});

@@ -7,7 +7,7 @@
 
 class SDL3Renderer;
 
-class SDL3Window final : Window {
+class SDL3Window final : public Window {
     friend class SDL3Renderer;
 
     protected:
@@ -16,6 +16,8 @@ class SDL3Window final : Window {
     public:
         SDL3Window(const char* title, const Vector2i size, const WindowFlags flags);
         ~SDL3Window() override;
+
+        std::unique_ptr<Renderer> initRenderer(const ApplicationRenderer requestedRenderer) override;
     
         std::string_view getTitle() const override;
         Vector2i getSize() const override;

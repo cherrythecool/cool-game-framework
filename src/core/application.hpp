@@ -6,21 +6,17 @@
 #include "core/platform.hpp"
 #include "core/window.hpp"
 #include "core/renderer.hpp"
+#include "math/color.hpp"
+#include "math/vector_2.hpp"
 
-enum class ApplicationPlatform {
-    DEFAULT = 0,
-    SDL3,
-};
-
-enum class ApplicationRenderer {
-    DEFAULT = 0,
-    SDL3_RENDERER,
-};
+#include "application_enums.hpp"
 
 struct ApplicationConfig {
     const char* name = nullptr;
     const ApplicationPlatform requestedPlatform = ApplicationPlatform::DEFAULT;
     const ApplicationRenderer requestedRenderer = ApplicationRenderer::DEFAULT;
+    const Vector2i size = {800, 600};
+    const Color8 clearColor = {48, 48, 48, 255};
 };
 
 class Application {
@@ -34,4 +30,6 @@ class Application {
     public:
         Application(const ApplicationConfig config);
         ~Application();
+
+        void run();
 };

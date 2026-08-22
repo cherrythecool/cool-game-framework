@@ -1,11 +1,17 @@
 #pragma once
 
+#include <memory>
 #include <string>
+
 #include "math/vector_2.hpp"
+
+#include "core/application_enums.hpp"
 
 struct WindowFlags {
     bool resizable = true;
 };
+
+class Renderer;
 
 class Window {
     protected:
@@ -13,6 +19,8 @@ class Window {
         
     public:
         virtual ~Window() = default;
+
+        virtual std::unique_ptr<Renderer> initRenderer(const ApplicationRenderer requestedRenderer) = 0;
 
         virtual std::string_view getTitle() const = 0;
         virtual Vector2i getSize() const = 0;

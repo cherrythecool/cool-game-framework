@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#include "core/application_enums.hpp"
+#include "drivers/sdl3/sdl3_renderer.hpp"
+
 SDL3Window::SDL3Window(const char* title, const Vector2i size, const WindowFlags flags) : Window(title, size, flags) {
     SDL_WindowFlags sdlFlags = 0;
 
@@ -46,4 +49,13 @@ Vector2i SDL3Window::getSize() const {
 
 bool SDL3Window::getFullscreen() const {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
+}
+
+std::unique_ptr<Renderer> SDL3Window::initRenderer(const ApplicationRenderer requestedRenderer) {
+    switch (requestedRenderer) {
+        case ApplicationRenderer::DEFAULT:
+        case ApplicationRenderer::SDL3_RENDERER:
+            return std::make_unique<SDL3Renderer>(*this);
+            break;
+    }
 }

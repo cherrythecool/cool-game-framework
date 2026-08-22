@@ -6,7 +6,7 @@
 
 class SDL3Window;
 
-class SDL3Renderer final : Renderer {
+class SDL3Renderer final : public Renderer {
     protected:
         SDL_Renderer* renderer;
     
