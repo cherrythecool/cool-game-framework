@@ -1,7 +1,7 @@
 #pragma once
 
-#include "math/vector_4.hpp"
-#include "math/color.hpp"
+#include "core/math/vector_4.hpp"
+#include "core/math/color.hpp"
 
 class Renderer {
     protected:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/numbers.hpp"
+#include "core/math/numbers.hpp"
 
 struct Vector4 {
 	float64_t x = 0;

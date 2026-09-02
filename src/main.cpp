@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "core/application.hpp"
 
 int main(void) {

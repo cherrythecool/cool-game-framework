@@ -6,8 +6,8 @@
 #include "core/platform.hpp"
 #include "core/window.hpp"
 #include "core/renderer.hpp"
-#include "math/color.hpp"
-#include "math/vector_2.hpp"
+#include "core/math/color.hpp"
+#include "core/math/vector_2.hpp"
 
 #include "application_enums.hpp"
 

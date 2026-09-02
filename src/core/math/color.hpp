@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math/numbers.hpp"
+#include "core/math/numbers.hpp"
 
 struct Color8 {
     uint8_t r = 0;

@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#include "math/vector_2.hpp"
+#include "core/math/vector_2.hpp"
 
 #include "core/application_enums.hpp"
 
