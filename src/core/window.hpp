@@ -20,7 +20,7 @@ class Window {
     public:
         virtual ~Window() = default;
 
-        virtual std::unique_ptr<Renderer> initRenderer(const ApplicationRenderer requestedRenderer) = 0;
+        virtual std::shared_ptr<Renderer> initRenderer(const ApplicationRenderer requestedRenderer) = 0;
 
         virtual std::string_view getTitle() const = 0;
         virtual Vector2i getSize() const = 0;

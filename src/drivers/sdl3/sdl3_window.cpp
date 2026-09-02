@@ -51,12 +51,12 @@ bool SDL3Window::getFullscreen() const {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
 }
 
-std::unique_ptr<Renderer> SDL3Window::initRenderer(const ApplicationRenderer requestedRenderer) {
+std::shared_ptr<Renderer> SDL3Window::initRenderer(const ApplicationRenderer requestedRenderer) {
     switch (requestedRenderer) {
         case ApplicationRenderer::DEFAULT:
         case ApplicationRenderer::SDL3_RENDERER:
             break;
     }
 
-    return std::make_unique<SDL3Renderer>(*this);
+    return std::make_shared<SDL3Renderer>(*this);
 }

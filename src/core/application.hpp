@@ -10,6 +10,7 @@
 #include "core/math/vector_2.hpp"
 
 #include "application_enums.hpp"
+#include "scene/object.hpp"
 
 struct ApplicationConfig {
     const char* name = nullptr;
@@ -21,16 +22,26 @@ struct ApplicationConfig {
 };
 
 class Application {
-    protected:
-        std::unique_ptr<Platform> platform = nullptr;
-        std::unique_ptr<Window> window = nullptr;
-        std::unique_ptr<Renderer> renderer = nullptr;
+    private:
+        static Application* instance;
 
+    protected:
         std::string_view name;
+        Object* root = nullptr;
+
+        std::shared_ptr<Platform> platform = nullptr;
+        std::shared_ptr<Window> window = nullptr;
+        std::shared_ptr<Renderer> renderer = nullptr;
 
     public:
-        Application(const ApplicationConfig config);
+        Application(const ApplicationConfig config, Object* initialRoot = nullptr);
         ~Application();
 
         void run();
+        std::shared_ptr<Renderer> getRenderer(void) const;
+
+        void swapToRoot(Object* newRoot);
+        Object* getRoot(void) const;
+
+        static Application* getInstance(void);
 };

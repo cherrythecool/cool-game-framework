@@ -17,6 +17,9 @@ add_executable(cgf
     src/drivers/sdl3/sdl3_platform.cpp
     src/drivers/sdl3/sdl3_window.cpp
     src/drivers/sdl3/sdl3_renderer.cpp
+
+    src/scene/object.cpp
+    src/scene/color_rect.cpp
 )
 
 target_include_directories(cgf PUBLIC src/)
