@@ -31,6 +31,7 @@ Application::Application(const ApplicationConfig config, Object* initialRoot) {
     
     renderer = window->initRenderer(config.requestedRenderer);
     renderer->setClearColor(config.clearColor);
+    renderer->setLetterboxSize(config.size);
 
     swapToRoot(initialRoot);
 }

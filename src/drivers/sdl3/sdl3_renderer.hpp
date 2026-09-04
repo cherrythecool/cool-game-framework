@@ -10,6 +10,7 @@ class SDL3Renderer final : public Renderer {
     protected:
         SDL_Renderer* renderer;
         Color8 clearColor;
+        Vector2i letterboxSize = {0, 0};
     
     public:
         SDL3Renderer(const SDL3Window& window, const char* driver = nullptr);
@@ -18,6 +19,7 @@ class SDL3Renderer final : public Renderer {
         void setClearColor(const Color8 clearColor) override;
         void clear() override;
         void swapBuffers() override;
+        void setLetterboxSize(Vector2i size) override;
 
         void drawRect(const Vector4 rectangle, const Color8 color) override;
 };

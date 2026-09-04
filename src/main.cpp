@@ -2,7 +2,6 @@
 
 #include "scene/color_rect.hpp"
 #include "scene/object.hpp"
-#include <iostream>
 
 class TestScene : public Object {
     protected:

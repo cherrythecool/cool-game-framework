@@ -1,6 +1,7 @@
 #include "sdl3_renderer.hpp"
 
 #include <iostream>
+#include "SDL3/SDL_render.h"
 #include "sdl3_window.hpp"
 
 SDL3Renderer::SDL3Renderer(const SDL3Window& window, const char* driver) {
@@ -22,12 +23,23 @@ void SDL3Renderer::setClearColor(const Color8 clearColor) {
 }
 
 void SDL3Renderer::clear() {
-	SDL_SetRenderDrawColor(renderer, clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-    SDL_RenderClear(renderer);
+    if (letterboxSize.x != 0 && letterboxSize.y != 0) {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        drawRect({0, 0, static_cast<float64_t>(letterboxSize.x), static_cast<float64_t>(letterboxSize.y)}, clearColor);
+    } else {
+        SDL_SetRenderDrawColor(renderer, clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+        SDL_RenderClear(renderer);
+    }
 }
 
 void SDL3Renderer::swapBuffers() {
     SDL_RenderPresent(renderer);
+}
+
+void SDL3Renderer::setLetterboxSize(Vector2i size) {
+    SDL_SetRenderLogicalPresentation(renderer, size.x, size.y, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    letterboxSize = size;
 }
 
 void SDL3Renderer::drawRect(const Vector4 rectangle, const Color8 color) {
