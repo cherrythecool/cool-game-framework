@@ -1,5 +1,6 @@
 #include "application.hpp"
 
+#include "core/input_event.hpp"
 #include "drivers/sdl3/sdl3_platform.hpp"
 #include "drivers/sdl3/sdl3_renderer.hpp"
 #include "drivers/sdl3/sdl3_window.hpp"
@@ -44,9 +45,15 @@ Application::~Application() {
 
 void Application::run() {
     double lastTime = platform->getTimeSeconds();
+    InputEvent inputEvent = InputEvent{};
 
     while (!platform->requestedClose()) {
-        platform->pollEvents();
+        std::optional<InputEvent> platformEvent = platform->pollEvent();
+        while (platformEvent.has_value()) {
+            inputEvent = platformEvent.value();
+            root->input(inputEvent);
+            platformEvent = platform->pollEvent();
+        }
 
         double deltaTime = platform->getTimeSeconds() - lastTime;
         lastTime = platform->getTimeSeconds();
@@ -67,6 +74,14 @@ void Application::run() {
 
 std::shared_ptr<Renderer> Application::getRenderer(void) const {
     return renderer;
+}
+
+std::shared_ptr<Window> Application::getWindow(void) const {
+    return window;
+}
+
+std::shared_ptr<Platform> Application::getPlatform(void) const {
+    return platform;
 }
 
 void Application::swapToRoot(Object* newRoot) {

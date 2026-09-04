@@ -1,6 +1,8 @@
 #include "color_rect.hpp"
 
 #include "core/application.hpp"
+#include "core/input_event.hpp"
+#include <iostream>
 
 ColorRect::ColorRect(Vector2 size, Color8 color) {
     this->size = size;

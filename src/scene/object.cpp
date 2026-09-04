@@ -28,6 +28,12 @@ void Object::draw(void) {
     }
 }
 
+void Object::input(InputEvent event) {
+    for (Object* child : children) {
+        child->input(event);
+    }
+}
+
 Object* Object::addChild(Object* object) {
     if (object->parent) {
         return nullptr;

@@ -10,7 +10,7 @@ class SDL3Platform final : public Platform {
         SDL3Platform();
         ~SDL3Platform();
 
-        void pollEvents() override;
+        std::optional<InputEvent> pollEvent() override;
         bool requestedClose() override;
 
         float64_t getTimeSeconds() override;

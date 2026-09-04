@@ -2,6 +2,7 @@
 
 #include "scene/color_rect.hpp"
 #include "scene/object.hpp"
+#include <iostream>
 
 class TestScene : public Object {
     protected:
@@ -25,13 +26,16 @@ class TestScene : public Object {
 };
 
 int main(void) {
-    Application app = Application({
-        "cool-game-framework - testing",
-        ApplicationPlatform::SDL3,
-        ApplicationRenderer::SDL3_RENDERER,
-        true,
-        {800, 600},
-    }, new TestScene());
+    Application app = Application(
+        {
+            "cool-game-framework - testing",
+            ApplicationPlatform::SDL3,
+            ApplicationRenderer::SDL3_RENDERER,
+            true,
+            {800, 600},
+        },
+        new TestScene()
+    );
     
     app.run();
     return 0;

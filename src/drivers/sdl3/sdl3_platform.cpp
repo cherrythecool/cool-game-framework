@@ -1,7 +1,10 @@
 #include "sdl3_platform.hpp"
 
 #include <iostream>
+
 #include "SDL3/SDL.h"
+#include "SDL3/SDL_events.h"
+#include "core/input_event.hpp"
 #include "core/time_constants.hpp"
 
 SDL3Platform::SDL3Platform() {
@@ -15,13 +18,31 @@ SDL3Platform::~SDL3Platform() {
     SDL_Quit();
 }
 
-void SDL3Platform::pollEvents() {
+std::optional<InputEvent> SDL3Platform::pollEvent() {
     SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT) {
+    SDL_PollEvent(&event);
+
+    switch (event.type) {
+        case SDL_EVENT_QUIT:
             hasRequestedClose = true;
-        }
+            break;
+        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_UP:
+            KeyboardEvent keyEvent = {
+                Keycode(event.key.key),
+                event.key.repeat,
+            };
+
+            return std::make_optional(InputEvent {
+                event.type == SDL_EVENT_KEY_DOWN,
+                InputEventType::KEYBOARD,
+                keyEvent,
+            });
+
+            break;
     }
+
+    return {};
 }
 
 bool SDL3Platform::requestedClose() {

@@ -38,7 +38,10 @@ class Application {
         ~Application();
 
         void run();
+
         std::shared_ptr<Renderer> getRenderer(void) const;
+        std::shared_ptr<Window> getWindow(void) const;
+        std::shared_ptr<Platform> getPlatform(void) const;
 
         void swapToRoot(Object* newRoot);
         Object* getRoot(void) const;

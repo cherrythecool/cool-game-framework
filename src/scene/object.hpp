@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "core/input_event.hpp"
+
 class Object {
     protected:
         bool hasAdded = false;
@@ -15,6 +17,7 @@ class Object {
         virtual void added(void);
         virtual void update(double deltaSeconds);
         virtual void draw(void);
+        virtual void input(InputEvent event);
 
         Object* addChild(Object* object);
         Object* removeChild(Object* object);

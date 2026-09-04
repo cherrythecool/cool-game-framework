@@ -6,3 +6,8 @@ build/
 
 # IDEs
 .vscode/
+
+# macOS
+.DS_Store
+Thumbs.db
+__MACOSX

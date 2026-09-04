@@ -10,5 +10,5 @@ class ColorRect : public Object2D {
         ColorRect(Vector2 size, Color8 color = {255, 255, 255, 255});
         virtual ~ColorRect();
 
-        virtual void draw(void);
+        virtual void draw(void) override;
 };
