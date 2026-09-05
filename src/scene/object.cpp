@@ -46,6 +46,8 @@ Object* Object::addChild(Object* object) {
         hasAdded = true;
         object->added();
     }
+
+    return object;
 }
 
 Object* Object::removeChild(Object* object) {
