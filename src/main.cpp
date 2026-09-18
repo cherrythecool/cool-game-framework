@@ -2,45 +2,39 @@
 
 #include "scene/color_rect.hpp"
 #include "scene/object.hpp"
+#include "scene/sprite_2d.hpp"
 
 #include <cmath>
 
 class TestScene : public Object {
     protected:
         ColorRect* coolSquare;
-        double time = 0.0;
-        double counter = 0.0;
+        ColorRect* evilSquare;
+        Sprite2D* kindBunny;
 
     public:
-        TestScene() {
-            coolSquare = new ColorRect({4, 4}, {255, 0, 0, 255});
-            coolSquare->position = {0.0, 300.0 - 2.0};
+        TestScene() {}
+
+        ~TestScene() {}
+
+        void added() override {
+            coolSquare = new ColorRect({64, 64}, {255, 100, 192, 255});
+            coolSquare->position = {64.0, 64.0};
             addChild(coolSquare);
-        }
 
-        ~TestScene() {
+            evilSquare = new ColorRect({64, 64}, {255, 0, 64, 255});
+            evilSquare->position = {800.0 - 64.0 - 64.0, 64.0};
+            addChild(evilSquare);
 
-        }
-
-        double mathFunc(void) {
-            return tan(time * 2.0) * 16.0 + 4.0 - cos(time / 5.0) * 64.0;
+            kindBunny = new Sprite2D(Application::getInstance()->getTextureLoader()->get("assets/test_bunny.png"));
+            kindBunny->position = {400, 300};
+            addChild(kindBunny);
         }
 
         void update(double deltaSeconds) override {
-            counter += deltaSeconds;
-
-            if (counter >= 1.0 / 120.0) {
-                counter = 0.0;
-                ColorRect* coolerSquare = new ColorRect(coolSquare->size, {sin(time) * 255, cos(time + 0.5) * 128, 0, 255});
-                coolerSquare->position = coolSquare->position;
-                addChild(coolerSquare);
-            }
-
-            coolSquare->position.x = time * 32.0;
-            coolSquare->position.y = (300.0 - 2.0) + mathFunc();
-            time += deltaSeconds;
-
-            Object::update(deltaSeconds);
+            double time = Application::getInstance()->getPlatform()->getTimeSeconds();
+            time *= 3.0;
+            kindBunny->scale = {sin(time) * 0.5 + 1.0, sin(time) * 0.5 + 1.0};
         }
 };
 
@@ -55,7 +49,7 @@ int main(void) {
         },
         new TestScene()
     );
-    
+
     app.run();
     return 0;
 }

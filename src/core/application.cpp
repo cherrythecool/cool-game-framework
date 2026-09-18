@@ -16,7 +16,7 @@ Application::Application(const ApplicationConfig config, Object* initialRoot) {
 
     instance = this;
     name = std::string_view(config.name);
-    
+
     const WindowFlags windowFlags = WindowFlags {
         config.resizable,
     };
@@ -28,10 +28,12 @@ Application::Application(const ApplicationConfig config, Object* initialRoot) {
             window = std::make_shared<SDL3Window>(config.name, config.size, windowFlags);
             break;
     }
-    
+
     renderer = window->initRenderer(config.requestedRenderer);
     renderer->setClearColor(config.clearColor);
     renderer->setLetterboxSize(config.size);
+
+    textureLoader = std::make_shared<TextureLoader>(renderer);
 
     swapToRoot(initialRoot);
 }
@@ -68,7 +70,7 @@ void Application::run() {
         if (root) {
             root->draw();
         }
-        
+
         renderer->swapBuffers();
     }
 }
@@ -83,6 +85,10 @@ std::shared_ptr<Window> Application::getWindow(void) const {
 
 std::shared_ptr<Platform> Application::getPlatform(void) const {
     return platform;
+}
+
+std::shared_ptr<TextureLoader> Application::getTextureLoader(void) const {
+    return textureLoader;
 }
 
 void Application::swapToRoot(Object* newRoot) {

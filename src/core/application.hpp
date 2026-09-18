@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "core/assets/texture_loader.hpp"
 #include "core/platform.hpp"
 #include "core/window.hpp"
 #include "core/renderer.hpp"
@@ -32,6 +33,7 @@ class Application {
         std::shared_ptr<Platform> platform = nullptr;
         std::shared_ptr<Window> window = nullptr;
         std::shared_ptr<Renderer> renderer = nullptr;
+        std::shared_ptr<TextureLoader> textureLoader = nullptr;
 
     public:
         Application(const ApplicationConfig config, Object* initialRoot = nullptr);
@@ -42,6 +44,7 @@ class Application {
         std::shared_ptr<Renderer> getRenderer(void) const;
         std::shared_ptr<Window> getWindow(void) const;
         std::shared_ptr<Platform> getPlatform(void) const;
+        std::shared_ptr<TextureLoader> getTextureLoader(void) const;
 
         void swapToRoot(Object* newRoot);
         Object* getRoot(void) const;
