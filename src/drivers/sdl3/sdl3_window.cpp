@@ -58,5 +58,10 @@ std::shared_ptr<Renderer> SDL3Window::initRenderer(const ApplicationRenderer req
             break;
     }
 
+// I fucking love macOS 26+ having really shitty metal drivers
+#if __APPLE__
+    return std::make_shared<SDL3Renderer>(*this, "opengl");
+#else
     return std::make_shared<SDL3Renderer>(*this);
+#endif
 }

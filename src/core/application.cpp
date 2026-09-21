@@ -61,6 +61,16 @@ void Application::run() {
         double deltaTime = platform->getTimeSeconds() - lastTime;
         lastTime = platform->getTimeSeconds();
 
+        frameTimer += deltaTime;
+
+        if (frameTimer >= 1.0) {
+            frameTimer = 0.0;
+            std::cout << frames << "fps\n";
+            frames = 0;
+        } else {
+            frames++;
+        }
+
         if (root) {
             root->update(deltaTime);
         }

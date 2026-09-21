@@ -4,6 +4,7 @@
 #include <string>
 #include "SDL3/SDL_render.h"
 #include "SDL3/SDL_surface.h"
+#include "SDL3/SDL_video.h"
 #include "core/application.hpp"
 #include "sdl3_window.hpp"
 
@@ -55,6 +56,8 @@ SDL3Renderer::SDL3Renderer(const SDL3Window& window, const char* driver) {
         std::cerr << "sdl create renderer err: " << SDL_GetError() << std::endl;
         std::exit(1);
     }
+
+    SDL_SetWindowSurfaceVSync(window.window, SDL_WINDOW_SURFACE_VSYNC_DISABLED);
 }
 
 SDL3Renderer::~SDL3Renderer() {

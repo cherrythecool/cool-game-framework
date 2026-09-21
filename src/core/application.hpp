@@ -26,6 +26,9 @@ class Application {
     private:
         static Application* instance;
 
+        double frameTimer = 0.0;
+        uint64_t frames = 0;
+
     protected:
         std::string_view name;
         Object* root = nullptr;
