@@ -94,3 +94,37 @@ app_make_display :: proc(app: ^App, config: rendering.DisplayInitConfig) -> unio
             return nil
     }
 }
+
+app_init_quad :: proc(app: ^App) -> rendering.Mesh {
+    rendering.renderer_bind(&app.main_display)
+
+    // tightly packed as vec2 for vertex positions & vec2 for uvs
+    quad_vertices: []f32 = {
+        0.0, 1.0,  0.0, 1.0,   // top left
+        0.0, 0.0,  0.0, 0.0,   // bottom left
+        1.0, 0.0,  1.0, 0.0,   // bottom right
+        1.0, 1.0,  1.0, 1.0,   // top right
+    }
+
+    quad_indices: []u32 = {
+        0, 1, 3,
+        1, 2, 3,
+    }
+
+    return rendering.mesh_init(quad_vertices, quad_indices, {
+        {
+            count = 2,
+            type = .F32,
+            normalize = false,
+            bytes_between_each = 4 * size_of(f32),
+            bytes_from_each = 0,
+        },
+        {
+            count = 2,
+            type = .F32,
+            normalize = false,
+            bytes_between_each = 4 * size_of(f32),
+            bytes_from_each = 2 * size_of(f32),
+        },
+    })
+}

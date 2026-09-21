@@ -78,38 +78,9 @@ main :: proc() {
             fmt.panicf("Failed to load texture with error: %v", result)
     }
 
-    defer rendering.renderer_bind(&app.main_display)
     defer rendering.texture_deinit(dog)
 
-    points: []f32 = {
-        // positions    // texture coords
-        0.0, 1.0,       0.0, 1.0,   // top left
-        0.0, 0.0,       0.0, 0.0,   // bottom left
-        1.0, 0.0,       1.0, 0.0,   // bottom right
-        1.0, 1.0,       1.0, 1.0,   // top right
-    }
-
-    indices: []u32 = {
-        0, 1, 3,
-        1, 2, 3,
-    }
-
-    quad := rendering.mesh_init(points, indices, {
-        {
-            count = 2,
-            type = .F32,
-            normalize = false,
-            bytes_between_each = 4 * size_of(f32),
-            bytes_from_each = 0,
-        },
-        {
-            count = 2,
-            type = .F32,
-            normalize = false,
-            bytes_between_each = 4 * size_of(f32),
-            bytes_from_each = 2 * size_of(f32),
-        },
-    })
+    quad := engine.app_init_quad(&app)
     defer rendering.mesh_deinit(&quad)
 
     shader_program: rendering.ShaderProgram
@@ -160,12 +131,6 @@ main :: proc() {
                 case .WINDOW_RESIZED:
                     w := event.window.data1
                     h := event.window.data2
-
-                    bind_result := rendering.renderer_bind(&app.main_display)
-                    if bind_result != nil {
-                        fmt.panicf("Failed to bind renderer with error: %v", bind_result)
-                    }
-
                     gl.Viewport(0, 0, w, h)
                 case .QUIT:
                     break main_loop
@@ -182,11 +147,6 @@ main :: proc() {
 
         frames += 1
         timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0
-
-        bind_result = rendering.renderer_bind(&app.main_display)
-        if bind_result != nil {
-            fmt.panicf("Failed to bind main display, error: %v", bind_result.(rendering.RendererError))
-        }
 
         rendering.renderer_clear_color_buffer(&app.main_display.renderer, nil)
 
