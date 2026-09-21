@@ -64,7 +64,7 @@ main :: proc() {
             
     sound.device_resume_playback(&device)
     
-    bind_result := rendering.renderer_bind(app.main_display)
+    bind_result := rendering.renderer_bind(&app.main_display)
     if bind_result != nil {
         fmt.panicf("Failed to bind main display, error: %v", bind_result.(rendering.RendererError))
     }
@@ -78,7 +78,7 @@ main :: proc() {
             fmt.panicf("Failed to load texture with error: %v", result)
     }
 
-    defer rendering.renderer_bind(app.main_display)
+    defer rendering.renderer_bind(&app.main_display)
     defer rendering.texture_deinit(dog)
 
     points: []f32 = {
@@ -161,47 +161,16 @@ main :: proc() {
                     w := event.window.data1
                     h := event.window.data2
 
-                    for &display in app.displays {
-                        if display.source_id == event.window.windowID {
-                            bind_result := rendering.renderer_bind(&display)
-                            if bind_result != nil {
-                                fmt.panicf("Failed to bind renderer with error: %v", bind_result)
-                            }
-    
-                            gl.Viewport(0, 0, w, h)
-                            break
-                        }
+                    bind_result := rendering.renderer_bind(&app.main_display)
+                    if bind_result != nil {
+                        fmt.panicf("Failed to bind renderer with error: %v", bind_result)
                     }
+
+                    gl.Viewport(0, 0, w, h)
                 case .QUIT:
                     break main_loop
                 case .WINDOW_FOCUS_GAINED:
                     last_focused = event.window.windowID
-                case .WINDOW_CLOSE_REQUESTED:
-                    if event.window.windowID == app.main_display.source_id {
-                        break main_loop
-                    } else {
-                        for &display in app.displays {
-                            if display.source_id == event.window.windowID {
-                                // TODO: fix this
-                                if engine.app_remove_display(&app, &display) {
-                                    // test = nil
-                                }
-
-                                break
-                            }
-                        }
-
-                        for &display in app.displays {
-                            if display.source_id == last_focused {
-                                rendering.display_focus(&display)
-                                break
-                            }
-                        }
-
-                        if app.main_display != nil {
-                            rendering.display_focus(app.main_display)
-                        }
-                    }
                 }
         }
 
@@ -214,7 +183,7 @@ main :: proc() {
         frames += 1
         timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0
 
-        bind_result = rendering.renderer_bind(app.main_display)
+        bind_result = rendering.renderer_bind(&app.main_display)
         if bind_result != nil {
             fmt.panicf("Failed to bind main display, error: %v", bind_result.(rendering.RendererError))
         }
@@ -222,7 +191,7 @@ main :: proc() {
         rendering.renderer_clear_color_buffer(&app.main_display.renderer, nil)
 
         rendering.shader_bind(shader_program)
-        window_size := rendering.display_get_size(app.main_display)
+        window_size := rendering.display_get_size(&app.main_display)
         screen_transform = glsl.mat4Ortho3d(0, f32(window_size.x), f32(window_size.y), 0, -1, 1)
         rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
@@ -249,7 +218,7 @@ main :: proc() {
         rendering.texture_bind(dog)
         rendering.mesh_draw_triangles(quad)
 
-        swap_error := rendering.display_swap_buffers(app.main_display)
+        swap_error := rendering.display_swap_buffers(&app.main_display)
         if swap_error.type != .None {
             if swap_error.message != nil {
                 fmt.panicf("Failed to swap window buffers, error: %v, error message: %s", swap_error.type, swap_error.message)
