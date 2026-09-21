@@ -43,6 +43,6 @@ sprite_ready :: proc(self: ^GameObject) {}
 sprite_update :: proc(self: ^GameObject, delta: f64) {}
 
 sprite_draw :: proc(self: ^GameObject) {
-    spr := self.data.(Sprite)
-    rendering.texture_bind(spr.texture)
+    sprite := self.data.(Sprite)
+    rendering.texture_bind(sprite.texture)
 }

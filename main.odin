@@ -63,11 +63,6 @@ main :: proc() {
     }
             
     sound.device_resume_playback(&device)
-    
-    bind_result := rendering.renderer_bind(&app.main_display)
-    if bind_result != nil {
-        fmt.panicf("Failed to bind main display, error: %v", bind_result.(rendering.RendererError))
-    }
 
     dog: rendering.Texture
     dog_result := rendering.texture_load("assets/dog.png")
@@ -79,9 +74,6 @@ main :: proc() {
     }
 
     defer rendering.texture_deinit(dog)
-
-    quad := engine.app_init_quad(&app)
-    defer rendering.mesh_deinit(&quad)
 
     shader_program: rendering.ShaderProgram
     shader_result := rendering.shader_load("assets/shaders/sprite.frag", "assets/shaders/sprite.vert")
@@ -176,7 +168,7 @@ main :: proc() {
         rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
 
         rendering.texture_bind(dog)
-        rendering.mesh_draw_triangles(quad)
+        rendering.mesh_draw_triangles(app.default_quad)
 
         swap_error := rendering.display_swap_buffers(&app.main_display)
         if swap_error.type != .None {

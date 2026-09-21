@@ -9,10 +9,21 @@ import "vendor:sdl3"
 import gl "vendor:OpenGL"
 
 import "../rendering"
+import "../sound"
+import "../game"
 
 App :: struct {
+    // rendering / display
     main_display: rendering.Display,
     content_size: glsl.vec2,
+    default_quad: rendering.Mesh,
+
+    // sound
+    sound_device: sound.Device,
+
+    // game state
+    current_scene: game.Scene,
+    globals: [dynamic]game.GameObject,
 }
 
 AppInitConfig :: struct {
@@ -73,10 +84,13 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
         return bind_result.(rendering.RendererError)
     }
 
+    app.default_quad = app_init_quad(&app)
+
     return app
 }
 
 app_deinit :: proc(app: ^App) {
+    rendering.mesh_deinit(&app.default_quad)
     rendering.display_deinit(&app.main_display)
     sdl3.Quit()
 }
