@@ -1,11 +1,10 @@
 #version 330 core
-out vec4 FragColor;
 
-in vec2 UV;
+in vec2 textureUV;
+out vec4 fragmentColor;
 
-uniform sampler2D tex;
-uniform float time;
+uniform sampler2D sampledTexture;
 
 void main() {
-    FragColor = texture(tex, UV);
+    fragmentColor = texture(sampledTexture, textureUV);
 }

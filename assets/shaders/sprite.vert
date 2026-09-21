@@ -1,13 +1,14 @@
 #version 330 core
-layout (location = 0) in vec2 pos;
-layout (location = 1) in vec2 uv;
 
-uniform mat4 trans;
-uniform mat4 scr_trans;
+layout (location = 0) in vec2 vertexPosition;
+layout (location = 1) in vec2 vertexUV;
 
-out vec2 UV;
+uniform mat4 projectionMatrix;
+uniform mat4 modelMatrix;
+
+out vec2 textureUV;
 
 void main() {
-    gl_Position = scr_trans * trans * vec4(pos.x, pos.y, 0.0, 1.0);
-    UV = uv;
+    gl_Position = projectionMatrix * modelMatrix * vec4(vertexPosition.x, vertexPosition.y, 0.0, 1.0);
+    textureUV = vertexUV;
 }

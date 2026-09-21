@@ -131,10 +131,10 @@ main :: proc() {
 
     transform: glsl.mat4 = 1
     transform *= glsl.mat4Scale(glsl.vec3{f32(dog.width), f32(dog.height), 1.0})
-    rendering.shader_set_uniform(&shader_program, "trans", transform)
+    rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
 
     screen_transform: glsl.mat4 = glsl.mat4Ortho3d(0, 1280, 720, 0, -1, 1)
-    rendering.shader_set_uniform(&shader_program, "scr_trans", screen_transform)
+    rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
     rendering.renderer_set_clear_color(&app.main_display.renderer, { 0.08, 0.08, 0.08, 1.0 })
 
@@ -224,7 +224,7 @@ main :: proc() {
         rendering.shader_bind(shader_program)
         window_size := rendering.display_get_size(app.main_display)
         screen_transform = glsl.mat4Ortho3d(0, f32(window_size.x), f32(window_size.y), 0, -1, 1)
-        rendering.shader_set_uniform(&shader_program, "scr_trans", screen_transform)
+        rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
         scale_x: f32 = math.sin(timer) * 0.5 + 1.5
         scale_y: f32 = math.sin(timer*3.14) * 0.7 + 1.7
@@ -244,8 +244,7 @@ main :: proc() {
         transform *= glsl.mat4Scale(size)
         transform *= glsl.mat4Scale(glsl.vec3{0.5, 0.5, 1.0})
 
-        rendering.shader_set_uniform(&shader_program, "trans", transform)
-        rendering.shader_set_uniform(&shader_program, "time", timer*2.0)
+        rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
 
         rendering.texture_bind(dog)
         rendering.mesh_draw_triangles(quad)
