@@ -16,6 +16,8 @@ App :: struct {
     // rendering / display
     main_display: rendering.Display,
     content_size: glsl.vec2,
+    viewport: glsl.ivec4,
+    window_size: glsl.ivec2,
     default_quad: rendering.Mesh,
 
     // sound
@@ -50,8 +52,11 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
         content_size = {
             f32(config.content_size.x),
             f32(config.content_size.y),
-        }
+        },
     }
+
+    app.viewport = {0, 0, config.content_size.x, config.content_size.y}
+    app.window_size = config.content_size
 
     if !sdl3.Init(sdl3.INIT_VIDEO | sdl3.INIT_AUDIO) {
         return AppError { .BackendFailedToInitialize, sdl3.GetError() }

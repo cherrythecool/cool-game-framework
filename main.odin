@@ -99,8 +99,6 @@ main :: proc() {
     screen_transform: glsl.mat4 = glsl.mat4Ortho3d(0, 1280, 720, 0, -1, 1)
     rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
-    rendering.renderer_set_clear_color(&app.main_display.renderer, { 0.08, 0.08, 0.08, 1.0 })
-
     timer: f32 = 0.0
 
     last_ticks := sdl3.GetTicksNS()
@@ -123,7 +121,20 @@ main :: proc() {
                 case .WINDOW_RESIZED:
                     w := event.window.data1
                     h := event.window.data2
-                    gl.Viewport(0, 0, w, h)
+
+                    app.window_size = {w, h}
+
+                    if (f32(w) / f32(h) > f32(app.content_size.x) / f32(app.content_size.y)) {
+                        w = i32(f32(app.content_size.x) * (f32(h) / f32(app.content_size.y)))
+                    } else {
+                        h = i32(f32(app.content_size.y) * (f32(w) / f32(app.content_size.x)))
+                    }
+
+                    app.viewport.z = w
+                    app.viewport.w = h
+
+                    app.viewport.x = (app.window_size.x - app.viewport.z) / 2
+                    app.viewport.y = (app.window_size.y - app.viewport.w) / 2
                 case .QUIT:
                     break main_loop
                 case .WINDOW_FOCUS_GAINED:
@@ -140,11 +151,23 @@ main :: proc() {
         frames += 1
         timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0
 
+        gl.Viewport(0, 0, app.window_size.x, app.window_size.y)
+
+        rendering.renderer_set_clear_color(&app.main_display.renderer, { 0.0, 0.0, 0.0, 1.0 })
         rendering.renderer_clear_color_buffer(&app.main_display.renderer, nil)
 
+        {
+            gl.Enable(gl.SCISSOR_TEST)
+            defer gl.Disable(gl.SCISSOR_TEST)
+    
+            gl.Viewport(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
+            gl.Scissor(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
+            rendering.renderer_set_clear_color(&app.main_display.renderer, { 0.08, 0.08, 0.08, 1.0 })
+            rendering.renderer_clear_color_buffer(&app.main_display.renderer, nil)
+        }
+
         rendering.shader_bind(shader_program)
-        window_size := rendering.display_get_size(&app.main_display)
-        screen_transform = glsl.mat4Ortho3d(0, f32(window_size.x), f32(window_size.y), 0, -1, 1)
+        screen_transform = glsl.mat4Ortho3d(0, f32(app.content_size.x), f32(app.content_size.y), 0, -1, 1)
         rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
         scale_x: f32 = math.sin(timer) * 0.5 + 1.5
