@@ -40,19 +40,8 @@ main :: proc() {
             fmt.panicf("Failed to initialize app renderer, error: %v", result)
     }
 
-    device: sound.Device
-    device_result := sound.device_init()
-    defer sound.device_deinit(&device)
-
-    switch result in device_result {
-        case sound.Device:
-            device = result
-        case cstring:
-            fmt.panicf("Failed to initialize audio device, error: %s", result)
-    }
-
     song: sound.CherryStream
-    song_result := sound.stream_init(&device, "assets/TestSong.ogg")
+    song_result := sound.stream_init(&app.sound_device, "assets/TestSong.ogg")
     defer sound.stream_deinit(&song)
     
     switch result in song_result {
@@ -62,7 +51,7 @@ main :: proc() {
             log.warnf("Failed to load song, error: %s", result)
     }
             
-    sound.device_resume_playback(&device)
+    sound.device_resume_playback(&app.sound_device)
 
     dog: rendering.Texture
     dog_result := rendering.texture_load("assets/dog.png")

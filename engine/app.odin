@@ -49,10 +49,7 @@ AppInitResult :: union {
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
     app: App = {
-        content_size = {
-            f32(config.content_size.x),
-            f32(config.content_size.y),
-        },
+        content_size = { f32(config.content_size.x), f32(config.content_size.y) },
     }
 
     app.viewport = {0, 0, config.content_size.x, config.content_size.y}
@@ -60,6 +57,15 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
 
     if !sdl3.Init(sdl3.INIT_VIDEO | sdl3.INIT_AUDIO) {
         return AppError { .BackendFailedToInitialize, sdl3.GetError() }
+    }
+
+    device_result := sound.device_init()
+
+    switch result in device_result {
+        case sound.Device:
+            app.sound_device = result
+        case cstring:
+            fmt.panicf("failed to initialize audio device, error: %s", result)
     }
 
     display_result := app_make_display(&app, { config.title, config.content_size.x, config.content_size.y, true })
@@ -97,6 +103,7 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
 app_deinit :: proc(app: ^App) {
     rendering.mesh_deinit(&app.default_quad)
     rendering.display_deinit(&app.main_display)
+    sound.device_deinit(&app.sound_device)
     sdl3.Quit()
 }
 
