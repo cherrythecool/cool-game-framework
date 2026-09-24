@@ -13,6 +13,9 @@ import "../sound"
 import "../game"
 
 App :: struct {
+    // app state
+    running: bool,
+
     // rendering / display
     main_display: rendering.Display,
     content_size: glsl.vec2,
@@ -49,6 +52,7 @@ AppInitResult :: union {
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
     app: App = {
+        running = true,
         content_size = { f32(config.content_size.x), f32(config.content_size.y) },
     }
 
@@ -105,6 +109,117 @@ app_deinit :: proc(app: ^App) {
     rendering.display_deinit(&app.main_display)
     sound.device_deinit(&app.sound_device)
     sdl3.Quit()
+}
+
+app_run :: proc(app: ^App) {
+    for app.running {
+        app_poll(app)
+        app_update(app)
+
+        /*if sdl3.GetTicksNS() - last_ticks >= 1_000_000 * 1000 {
+            fmt.printfln("%v FPS", frames)
+            frames = 0
+            last_ticks = sdl3.GetTicksNS()
+        }
+
+        frames += 1
+        timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0*/
+
+        
+
+        /*
+        rendering.shader_bind(shader_program)
+        screen_transform = glsl.mat4Ortho3d(0, f32(app.content_size.x), f32(app.content_size.y), 0, -1, 1)
+        rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
+
+        scale_x: f32 = math.sin(timer) * 0.5 + 1.5
+        scale_y: f32 = math.sin(timer*3.14) * 0.7 + 1.7
+        size := glsl.vec3{f32(dog.width)*scale_x, f32(dog.height)*scale_y, 1.0}
+
+        transform = 1
+        transform *= glsl.mat4Translate(glsl.vec3{
+            math.wrap(timer * 256.0, 1280+(size.x/2.0)),
+            math.tan(timer*2.0) * 50.0 + 60.0,
+            0.0,
+        })
+        transform *= glsl.mat4Translate(glsl.vec3{
+            -size.x / 2.0,
+            -size.y / 2.0,
+            0.0,
+        })
+        transform *= glsl.mat4Scale(size)
+        transform *= glsl.mat4Scale(glsl.vec3{0.5, 0.5, 1.0})
+
+        rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
+
+        rendering.texture_bind(dog)
+        */
+
+        app_draw(app)
+    }
+}
+
+app_poll :: proc(app: ^App) {
+    event: sdl3.Event
+    for sdl3.PollEvent(&event) {
+        #partial switch event.type {
+            case .KEY_DOWN:
+                key := event.key.key
+            case .WINDOW_RESIZED:
+                w := event.window.data1
+                h := event.window.data2
+
+                app.window_size = {w, h}
+
+                if (f32(w) / f32(h) > f32(app.content_size.x) / f32(app.content_size.y)) {
+                    w = i32(f32(app.content_size.x) * (f32(h) / f32(app.content_size.y)))
+                } else {
+                    h = i32(f32(app.content_size.y) * (f32(w) / f32(app.content_size.x)))
+                }
+
+                app.viewport.z = w
+                app.viewport.w = h
+
+                app.viewport.x = (app.window_size.x - app.viewport.z) / 2
+                app.viewport.y = (app.window_size.y - app.viewport.w) / 2
+            case .QUIT:
+                app.running = false
+        }
+    }
+}
+
+app_update :: proc(app: ^App) {
+
+}
+
+app_draw :: proc(app: ^App) {
+    app_clear_screen(app)
+
+    rendering.mesh_draw_triangles(app.default_quad)
+
+    swap_error := rendering.display_swap_buffers(&app.main_display)
+    if swap_error.type != .None {
+        if swap_error.message != nil {
+            fmt.panicf("Failed to swap window buffers, error: %v, error message: %s", swap_error.type, swap_error.message)
+        } else {
+            fmt.panicf("Failed to swap window buffers, error: %v", swap_error.type)
+        }
+    }
+}
+
+app_clear_screen :: proc(app: ^App) {
+    gl.Viewport(0, 0, app.window_size.x, app.window_size.y)
+
+    rendering.renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.0, 0.0, 0.0, 1.0 })
+
+    {
+        gl.Enable(gl.SCISSOR_TEST)
+        defer gl.Disable(gl.SCISSOR_TEST)
+
+        gl.Viewport(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
+        gl.Scissor(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
+        rendering.renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.6, 0.6, 0.6, 1.0 })
+    }
 }
 
 app_make_display :: proc(app: ^App, config: rendering.DisplayInitConfig) -> union { rendering.Display, rendering.DisplayError, rendering.RendererError } {
