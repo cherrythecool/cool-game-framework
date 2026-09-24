@@ -20,7 +20,7 @@ sprite_init :: proc(texture: rendering.Texture) -> GameObject {
         data = Sprite {
             texture = texture,
             region = 0,
-            flipped = { false, false },
+            flipped = false,
 
             position = 0,
             scale = 1,
@@ -42,7 +42,8 @@ sprite_ready :: proc(self: ^GameObject) {}
 
 sprite_update :: proc(self: ^GameObject, delta: f64) {}
 
-sprite_draw :: proc(self: ^GameObject) {
+sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
     sprite := self.data.(Sprite)
     rendering.texture_bind(sprite.texture)
+    rendering.mesh_draw_triangles(renderer.default_quad)
 }

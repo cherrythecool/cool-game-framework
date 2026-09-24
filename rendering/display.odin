@@ -76,7 +76,7 @@ display_init :: proc(config: DisplayInitConfig) -> DisplayInitResult {
 }
 
 display_deinit :: proc(display: ^Display) {
-    renderer_deinit(&display.renderer)
+    renderer_deinit(display)
     sdl3.DestroyWindow(display.source)
 }
 

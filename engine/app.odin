@@ -1,5 +1,6 @@
 package engine
 
+import "core:time"
 import "core:slice"
 import "core:fmt"
 import "core:log"
@@ -21,7 +22,6 @@ App :: struct {
     content_size: glsl.vec2,
     viewport: glsl.ivec4,
     window_size: glsl.ivec2,
-    default_quad: rendering.Mesh,
 
     // sound
     sound_device: sound.Device,
@@ -47,7 +47,13 @@ AppError :: struct {
 }
 
 AppInitResult :: union {
-    App, AppError, rendering.DisplayError, rendering.RendererError,
+    ^App, AppError, rendering.DisplayError, rendering.RendererError,
+}
+
+@(private) current_instance: App
+
+app_get_instance :: proc() -> ^App {
+    return &current_instance
 }
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
@@ -99,33 +105,34 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
         return bind_result.(rendering.RendererError)
     }
 
-    app.default_quad = app_init_quad(&app)
+    app.main_display.renderer.default_quad = rendering.renderer_make_quad(&app.main_display)
 
-    return app
+    current_instance = app
+    return &current_instance
 }
 
 app_deinit :: proc(app: ^App) {
-    rendering.mesh_deinit(&app.default_quad)
     rendering.display_deinit(&app.main_display)
     sound.device_deinit(&app.sound_device)
     sdl3.Quit()
 }
 
 app_run :: proc(app: ^App) {
+    timer: f32 = 0.0
+
+    last_ticks := sdl3.GetTicksNS()
+    frames := 0
+
+    previous_frame := sdl3.GetTicksNS()
+    current_frame := sdl3.GetTicksNS()
+    delta_seconds: f64 = 0
+
     for app.running {
+        current_frame = sdl3.GetTicksNS()
+        delta_seconds = f64(current_frame - previous_frame) / f64(time.Second / time.Nanosecond)
+
         app_poll(app)
-        app_update(app)
-
-        /*if sdl3.GetTicksNS() - last_ticks >= 1_000_000 * 1000 {
-            fmt.printfln("%v FPS", frames)
-            frames = 0
-            last_ticks = sdl3.GetTicksNS()
-        }
-
-        frames += 1
-        timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0*/
-
-        
+        app_update(app, delta_seconds)
 
         /*
         rendering.shader_bind(shader_program)
@@ -156,6 +163,17 @@ app_run :: proc(app: ^App) {
         */
 
         app_draw(app)
+
+        if sdl3.GetTicksNS() - last_ticks >= 1_000_000 * 1000 {
+            fmt.printfln("%v FPS", frames)
+            frames = 0
+            last_ticks = sdl3.GetTicksNS()
+        }
+
+        frames += 1
+        timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0
+
+        previous_frame = current_frame
     }
 }
 
@@ -188,14 +206,14 @@ app_poll :: proc(app: ^App) {
     }
 }
 
-app_update :: proc(app: ^App) {
-
+app_update :: proc(app: ^App, delta_seconds: f64) {
+    game.scene_update(&app.current_scene, delta_seconds)
 }
 
 app_draw :: proc(app: ^App) {
     app_clear_screen(app)
 
-    rendering.mesh_draw_triangles(app.default_quad)
+    game.scene_draw(&app.current_scene, &app.main_display.renderer)
 
     swap_error := rendering.display_swap_buffers(&app.main_display)
     if swap_error.type != .None {
@@ -234,38 +252,4 @@ app_make_display :: proc(app: ^App, config: rendering.DisplayInitConfig) -> unio
         case:
             return nil
     }
-}
-
-app_init_quad :: proc(app: ^App) -> rendering.Mesh {
-    rendering.renderer_bind(&app.main_display)
-
-    // tightly packed as vec2 for vertex positions & vec2 for uvs
-    quad_vertices: []f32 = {
-        0.0, 1.0,  0.0, 1.0,   // top left
-        0.0, 0.0,  0.0, 0.0,   // bottom left
-        1.0, 0.0,  1.0, 0.0,   // bottom right
-        1.0, 1.0,  1.0, 1.0,   // top right
-    }
-
-    quad_indices: []u32 = {
-        0, 1, 3,
-        1, 2, 3,
-    }
-
-    return rendering.mesh_init(quad_vertices, quad_indices, {
-        {
-            count = 2,
-            type = .F32,
-            normalize = false,
-            bytes_between_each = 4 * size_of(f32),
-            bytes_from_each = 0,
-        },
-        {
-            count = 2,
-            type = .F32,
-            normalize = false,
-            bytes_between_each = 4 * size_of(f32),
-            bytes_from_each = 2 * size_of(f32),
-        },
-    })
 }

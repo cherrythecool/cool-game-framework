@@ -21,16 +21,16 @@ import "game"
 main :: proc() {
     context.logger = log.create_console_logger()
 
-    app: engine.App
+    app: ^engine.App
     app_result := engine.app_init({
         title = "cgf version idek",
         content_size = { 1280, 720 },
         vsync = true,
     })
-    defer engine.app_deinit(&app)
+    defer engine.app_deinit(app)
 
     switch result in app_result {
-        case engine.App:
+        case ^engine.App:
             app = result
         case engine.AppError:
             fmt.panicf("Failed to initialize app, error: %v", result)
@@ -50,7 +50,7 @@ main :: proc() {
         case cstring:
             log.warnf("Failed to load song, error: %s", result)
     }
-            
+
     sound.device_resume_playback(&app.sound_device)
 
     dog: rendering.Texture
@@ -89,14 +89,8 @@ main :: proc() {
     screen_transform: glsl.mat4 = glsl.mat4Ortho3d(0, 1280, 720, 0, -1, 1)
     rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
 
-    timer: f32 = 0.0
-
-    last_ticks := sdl3.GetTicksNS()
-    frames := 0
-
-    last_focused: sdl3.WindowID
-
     DOG_SPRITE := game.sprite_init(dog)
+    append(&app.current_scene.objects, DOG_SPRITE)
 
-    engine.app_run(&app)
+    engine.app_run(app)
 }
