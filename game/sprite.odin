@@ -1,5 +1,6 @@
 package game
 
+import "core:math/rand"
 import "core:math"
 import "core:fmt"
 import "core:math/linalg/glsl"
@@ -18,6 +19,8 @@ Sprite :: struct {
 
     offset: [2]f32,
     centered: bool,
+
+    time: f64,
 }
 
 sprite_init :: proc(path: string) -> GameObject {
@@ -35,6 +38,7 @@ sprite_init :: proc(path: string) -> GameObject {
 
             offset = 0,
             centered = true,
+            time = 0,
         },
 
         ready = sprite_ready,
@@ -48,13 +52,11 @@ sprite_init :: proc(path: string) -> GameObject {
 
 sprite_ready :: proc(self: ^GameObject) {}
 
-time: f64 = 0
-
 sprite_update :: proc(self: ^GameObject, delta: f64) {
     data := sprite_get_data(self)
-    time += delta
-    data.rotation += f32(delta * 45)
-    data.scale = math.sin_f32(f32(time)) + 1.5
+    data.time += delta * rand.float64_range(0.5, 2.0)
+    data.rotation += f32(delta * 45) * rand.float32_range(0.5, 2.0)
+    data.scale = math.sin_f32(f32(data.time)) + 1.5
 }
 
 sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
@@ -64,11 +66,11 @@ sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
         return
     }
 
-    shader := sprite.shader.(^Asset).data.(rendering.ShaderProgram)
+    shader := &(sprite.shader.(^Asset).data.(rendering.ShaderProgram))
 
-    rendering.shader_bind(shader)
+    rendering.shader_bind(shader^)
 
-    rendering.shader_set_uniform(&shader, "projectionMatrix", renderer.projection_matrix)
+    rendering.shader_set_uniform(shader, "projectionMatrix", renderer.projection_matrix)
 
     if sprite.texture != nil {
         texture := sprite.texture.(^Asset).data.(rendering.Texture)
@@ -105,7 +107,7 @@ sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
 
         transform *= glsl.mat4Scale( { f32(texture.width) * sprite.scale.x, f32(texture.height) * sprite.scale.y, 1 } )
 
-        rendering.shader_set_uniform(&shader, "modelMatrix", transform)
+        rendering.shader_set_uniform(shader, "modelMatrix", transform)
     }
 
     rendering.mesh_draw_triangles(renderer.default_quad)
@@ -123,6 +125,6 @@ sprite_deinit :: proc(self: ^GameObject) {
     }
 }
 
-sprite_get_data :: proc(self: ^GameObject) -> ^Sprite {
+sprite_get_data :: #force_inline proc(self: ^GameObject) -> ^Sprite {
     return &(self.data.(Sprite))
 }

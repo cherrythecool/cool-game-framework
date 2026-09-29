@@ -7,6 +7,7 @@ import "core:c"
 import "core:os"
 import "core:log"
 import "core:math"
+import "core:math/rand"
 import "core:fmt"
 
 import "vendor:sdl3"
@@ -53,11 +54,13 @@ main :: proc() {
 
     sound.device_resume_playback(&app.sound_device)
 
-    dog_sprite := game.sprite_init("assets/Dog.png")
-    dog_data := game.sprite_get_data(&dog_sprite)
-    dog_data.position = {640, 360}
-    dog_data.rotation = 45.0
-    append(&app.current_scene.objects, dog_sprite)
+    for i in 0..<1000 {
+        dog_sprite := game.sprite_init("assets/Dog.png")
+        dog_data := game.sprite_get_data(&dog_sprite)
+        dog_data.position = {f32(i) + rand.float32_range(-64, 64), rand.float32_range(0, 720)}
+        dog_data.rotation = rand.float32_range(-180, 180)
+        append(&app.current_scene.objects, dog_sprite)
+    }
 
     engine.app_run(&app)
 }

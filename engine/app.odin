@@ -130,35 +130,6 @@ app_run :: proc(app: ^App) {
 
         app_poll(app)
         app_update(app, delta_seconds)
-
-        /*
-        rendering.shader_bind(shader_program)
-        screen_transform = glsl.mat4Ortho3d(0, f32(app.content_size.x), f32(app.content_size.y), 0, -1, 1)
-        rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
-
-        scale_x: f32 = math.sin(timer) * 0.5 + 1.5
-        scale_y: f32 = math.sin(timer*3.14) * 0.7 + 1.7
-        size := glsl.vec3{f32(dog.width)*scale_x, f32(dog.height)*scale_y, 1.0}
-
-        transform = 1
-        transform *= glsl.mat4Translate(glsl.vec3{
-            math.wrap(timer * 256.0, 1280+(size.x/2.0)),
-            math.tan(timer*2.0) * 50.0 + 60.0,
-            0.0,
-        })
-        transform *= glsl.mat4Translate(glsl.vec3{
-            -size.x / 2.0,
-            -size.y / 2.0,
-            0.0,
-        })
-        transform *= glsl.mat4Scale(size)
-        transform *= glsl.mat4Scale(glsl.vec3{0.5, 0.5, 1.0})
-
-        rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
-
-        rendering.texture_bind(dog)
-        */
-
         app_draw(app)
 
         if sdl3.GetTicksNS() - last_ticks >= 1_000_000 * 1000 {

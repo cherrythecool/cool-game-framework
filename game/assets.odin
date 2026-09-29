@@ -57,7 +57,8 @@ assets_release :: proc(asset: ^Asset) {
 
 assets_get_texture :: proc(path: string) -> Maybe(^Asset) {
     if path in loader.assets {
-        if type_of(loader.assets[path].data) == rendering.Texture {
+        _, is_texture := loader.assets[path].data.(rendering.Texture)
+        if is_texture {
             loader.assets[path].references += 1
             return loader.assets[path]
         } else {
@@ -85,7 +86,8 @@ assets_get_texture :: proc(path: string) -> Maybe(^Asset) {
 
 assets_get_shader :: proc(id: string, fragment_path: string, vertex_path: string) -> Maybe(^Asset) {
     if id in loader.assets {
-        if type_of(loader.assets[id].data) == rendering.ShaderProgram {
+        _, is_shader := loader.assets[id].data.(rendering.ShaderProgram)
+        if is_shader {
             loader.assets[id].references += 1
             return loader.assets[id]
         } else {

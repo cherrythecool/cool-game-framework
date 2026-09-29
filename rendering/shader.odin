@@ -13,7 +13,7 @@ ShaderProgram :: struct {
 
 shader_get_uniform_location :: proc(program: ^ShaderProgram, name: cstring) -> i32 {
     name_str := string(name)
-    if !(name_str in program.uniform_locations) {
+    if name_str not_in program.uniform_locations {
         program.uniform_locations[name_str] = gl.GetUniformLocation(program.program, name)
     }
 
