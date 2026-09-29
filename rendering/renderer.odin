@@ -9,6 +9,7 @@ Renderer :: struct {
     ctx: sdl3.GLContext,
 
     default_quad: Mesh,
+    projection_matrix: glsl.mat4,
 }
 
 RendererErrorType :: enum {

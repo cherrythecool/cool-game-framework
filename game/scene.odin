@@ -23,3 +23,11 @@ scene_draw :: proc(scene: ^Scene, renderer: ^rendering.Renderer) {
         object_draw(&scene.objects[i], renderer)
     }
 }
+
+scene_deinit :: proc(scene: ^Scene) {
+    for i in 0..<len(scene.objects) {
+        object_deinit(&scene.objects[i])
+    }
+
+    clear(&scene.objects)
+}

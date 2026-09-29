@@ -83,6 +83,7 @@ texture_deinit :: proc(texture: Texture) {
 }
 
 texture_bind :: proc(texture: Texture) {
+    gl.ActiveTexture(gl.TEXTURE0)
     gl.BindTexture(gl.TEXTURE_2D, texture.id)
 }
 

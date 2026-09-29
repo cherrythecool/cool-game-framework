@@ -15,6 +15,7 @@ GameObject :: struct {
     ready: proc(^GameObject),
     update: proc(^GameObject, f64),
     draw: proc(^GameObject, ^rendering.Renderer),
+    deinit: proc(^GameObject),
 }
 
 object_ready :: proc(object: ^GameObject) {
@@ -32,5 +33,11 @@ object_update :: proc(object: ^GameObject, delta_seconds: f64) {
 object_draw :: proc(object: ^GameObject, renderer: ^rendering.Renderer) {
     if object.draw != nil {
         object.draw(object, renderer)
+    }
+}
+
+object_deinit :: proc(object: ^GameObject) {
+    if object.deinit != nil {
+        object.deinit(object)
     }
 }

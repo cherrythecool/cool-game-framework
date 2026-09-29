@@ -21,16 +21,16 @@ import "game"
 main :: proc() {
     context.logger = log.create_console_logger()
 
-    app: ^engine.App
+    app: engine.App
     app_result := engine.app_init({
         title = "cgf version idek",
         content_size = { 1280, 720 },
         vsync = true,
     })
-    defer engine.app_deinit(app)
+    defer engine.app_deinit(&app)
 
     switch result in app_result {
-        case ^engine.App:
+        case engine.App:
             app = result
         case engine.AppError:
             fmt.panicf("Failed to initialize app, error: %v", result)
@@ -53,44 +53,8 @@ main :: proc() {
 
     sound.device_resume_playback(&app.sound_device)
 
-    dog: rendering.Texture
-    dog_result := rendering.texture_load("assets/dog.png")
-    switch result in dog_result {
-        case rendering.Texture:
-            dog = result
-        case rendering.TextureLoadError:
-            fmt.panicf("Failed to load texture with error: %v", result)
-    }
-
-    defer rendering.texture_deinit(dog)
-
-    shader_program: rendering.ShaderProgram
-    shader_result := rendering.shader_load("assets/shaders/sprite.frag", "assets/shaders/sprite.vert")
-    switch result in shader_result {
-        case rendering.ShaderProgram:
-            shader_program = result
-        case rendering.ShaderCompileError:
-            fmt.panicf("Failed to compile shader, error: %v", result)
-        case rendering.ShaderLoadError:
-            fmt.panicf("Failed to load shader, error: %v", result)
-        case os.Error:
-            fmt.panicf("Failed to read file from os, error: %v", result)
-    }
-    defer rendering.shader_free(&shader_program)
-    rendering.shader_bind(shader_program)
-
-    gl.ActiveTexture(gl.TEXTURE0)
-    rendering.texture_bind(dog)
-
-    transform: glsl.mat4 = 1
-    transform *= glsl.mat4Scale(glsl.vec3{f32(dog.width), f32(dog.height), 1.0})
-    rendering.shader_set_uniform(&shader_program, "modelMatrix", transform)
-
-    screen_transform: glsl.mat4 = glsl.mat4Ortho3d(0, 1280, 720, 0, -1, 1)
-    rendering.shader_set_uniform(&shader_program, "projectionMatrix", screen_transform)
-
-    DOG_SPRITE := game.sprite_init(dog)
+    DOG_SPRITE := game.sprite_init("assets/dog.png")
     append(&app.current_scene.objects, DOG_SPRITE)
 
-    engine.app_run(app)
+    engine.app_run(&app)
 }

@@ -47,13 +47,7 @@ AppError :: struct {
 }
 
 AppInitResult :: union {
-    ^App, AppError, rendering.DisplayError, rendering.RendererError,
-}
-
-@(private) current_instance: App
-
-app_get_instance :: proc() -> ^App {
-    return &current_instance
+    App, AppError, rendering.DisplayError, rendering.RendererError,
 }
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
@@ -105,13 +99,16 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
         return bind_result.(rendering.RendererError)
     }
 
-    app.main_display.renderer.default_quad = rendering.renderer_make_quad(&app.main_display)
+    renderer := &app.main_display.renderer
+    renderer.default_quad = rendering.renderer_make_quad(&app.main_display)
+    renderer.projection_matrix = glsl.mat4Ortho3d(0, app.content_size.x, app.content_size.y, 0, -1, 1)
 
-    current_instance = app
-    return &current_instance
+    return app
 }
 
 app_deinit :: proc(app: ^App) {
+    game.scene_deinit(&app.current_scene)
+
     rendering.display_deinit(&app.main_display)
     sound.device_deinit(&app.sound_device)
     sdl3.Quit()
