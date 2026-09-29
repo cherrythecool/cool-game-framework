@@ -53,8 +53,11 @@ main :: proc() {
 
     sound.device_resume_playback(&app.sound_device)
 
-    DOG_SPRITE := game.sprite_init("assets/dog.png")
-    append(&app.current_scene.objects, DOG_SPRITE)
+    dog_sprite := game.sprite_init("assets/Dog.png")
+    dog_data := game.sprite_get_data(&dog_sprite)
+    dog_data.position = {640, 360}
+    dog_data.rotation = 45.0
+    append(&app.current_scene.objects, dog_sprite)
 
     engine.app_run(&app)
 }

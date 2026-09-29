@@ -1,5 +1,6 @@
 package game
 
+import "core:math"
 import "core:fmt"
 import "core:math/linalg/glsl"
 import "../rendering"
@@ -16,6 +17,7 @@ Sprite :: struct {
     rotation: f32,
 
     offset: [2]f32,
+    centered: bool,
 }
 
 sprite_init :: proc(path: string) -> GameObject {
@@ -32,6 +34,7 @@ sprite_init :: proc(path: string) -> GameObject {
             rotation = 0,
 
             offset = 0,
+            centered = true,
         },
 
         ready = sprite_ready,
@@ -45,7 +48,14 @@ sprite_init :: proc(path: string) -> GameObject {
 
 sprite_ready :: proc(self: ^GameObject) {}
 
-sprite_update :: proc(self: ^GameObject, delta: f64) {}
+time: f64 = 0
+
+sprite_update :: proc(self: ^GameObject, delta: f64) {
+    data := sprite_get_data(self)
+    time += delta
+    data.rotation += f32(delta * 45)
+    data.scale = math.sin_f32(f32(time)) + 1.5
+}
 
 sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
     sprite := self.data.(Sprite)
@@ -64,7 +74,37 @@ sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
         texture := sprite.texture.(^Asset).data.(rendering.Texture)
         rendering.texture_bind(texture)
 
-        transform: glsl.mat4 = glsl.mat4Scale( { f32(texture.width), f32(texture.height), 1 } )
+        transform: glsl.mat4 = 1
+        transform *= glsl.mat4Translate( { sprite.position.x, sprite.position.y, 0 } )
+
+        transform *= glsl.mat4Translate( { sprite.offset.x * sprite.scale.x, sprite.offset.y * sprite.scale.y, 0 } )
+
+        if sprite.centered {
+            transform *= glsl.mat4Translate({
+                f32(texture.width) * sprite.scale.x * -0.5,
+                f32(texture.height) * sprite.scale.y * -0.5,
+                0,
+            })
+        }
+
+        if sprite.rotation != 0.0 {
+            transform *= glsl.mat4Translate({ 
+                f32(texture.width) * sprite.origin.x * sprite.scale.x,
+                f32(texture.height) * sprite.origin.y * sprite.scale.y,
+                0,
+            })
+
+            transform *= glsl.mat4Rotate( { 0, 0, 1 }, math.RAD_PER_DEG * sprite.rotation )
+
+            transform *= glsl.mat4Translate({ 
+                f32(texture.width) * -sprite.origin.x * sprite.scale.x,
+                f32(texture.height) * -sprite.origin.y * sprite.scale.y,
+                0,
+            })
+        }
+
+        transform *= glsl.mat4Scale( { f32(texture.width) * sprite.scale.x, f32(texture.height) * sprite.scale.y, 1 } )
+
         rendering.shader_set_uniform(&shader, "modelMatrix", transform)
     }
 
@@ -81,4 +121,8 @@ sprite_deinit :: proc(self: ^GameObject) {
     if sprite.texture != nil {
         assets_release(sprite.texture.(^Asset))
     }
+}
+
+sprite_get_data :: proc(self: ^GameObject) -> ^Sprite {
+    return &(self.data.(Sprite))
 }
