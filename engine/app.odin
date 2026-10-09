@@ -108,7 +108,7 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
 
 app_deinit :: proc(app: ^App) {
     game.scene_deinit(&app.current_scene)
-
+    game.assets_deinit()
     rendering.display_deinit(&app.main_display)
     sound.device_deinit(&app.sound_device)
     sdl3.Quit()

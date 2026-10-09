@@ -55,7 +55,7 @@ mesh_bind :: proc(mesh: Mesh) {
     gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ebo)
 }
 
-mesh_draw_triangles :: proc(mesh: Mesh) {
+mesh_draw :: proc(mesh: Mesh) {
     mesh_bind(mesh)
     gl.DrawElements(gl.TRIANGLES, mesh.indice_count, gl.UNSIGNED_INT, nil)
 }

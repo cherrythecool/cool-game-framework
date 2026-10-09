@@ -29,6 +29,10 @@ AssetLoader :: struct {
     return nil
 }
 
+assets_deinit :: proc() {
+    delete(loader.assets)
+}
+
 assets_release :: proc(asset: ^Asset) {
     if asset.references > 0 {
         asset.references -= 1

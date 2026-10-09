@@ -5,6 +5,7 @@ import "base:runtime"
 
 import "core:c"
 import "core:log"
+import "core:fmt"
 
 import "vendor:sdl3"
 
@@ -90,7 +91,7 @@ stream_deinit :: proc(stream: ^CherryStream) {
     }
 
     if stream.internal_streamer != nil {
-        free(stream.output_stream)
+        free(stream.internal_streamer)
     }
 }
 

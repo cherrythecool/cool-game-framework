@@ -29,5 +29,5 @@ scene_deinit :: proc(scene: ^Scene) {
         object_deinit(&scene.objects[i])
     }
 
-    clear(&scene.objects)
+    delete(scene.objects)
 }

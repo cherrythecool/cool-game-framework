@@ -110,7 +110,7 @@ sprite_draw :: proc(self: ^GameObject, renderer: ^rendering.Renderer) {
         rendering.shader_set_uniform(shader, "modelMatrix", transform)
     }
 
-    rendering.mesh_draw_triangles(renderer.default_quad)
+    rendering.mesh_draw(renderer.default_quad)
 }
 
 sprite_deinit :: proc(self: ^GameObject) {
