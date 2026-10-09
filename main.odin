@@ -54,10 +54,10 @@ main :: proc() {
 
     sound.device_resume_playback(&app.sound_device)
 
-    for i in 0..<1000 {
+    for i in 0..<5 {
         dog_sprite := game.sprite_init("assets/Dog.png")
         dog_data := game.sprite_get_data(&dog_sprite)
-        dog_data.position = {f32(i) + rand.float32_range(-64, 64), rand.float32_range(0, 720)}
+        dog_data.position = {f32(i * 300) + rand.float32_range(-64, 64), rand.float32_range(0, 720)}
         dog_data.rotation = rand.float32_range(-180, 180)
         append(&app.current_scene.objects, dog_sprite)
     }

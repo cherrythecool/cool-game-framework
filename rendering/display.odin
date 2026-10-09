@@ -22,6 +22,12 @@ DisplayError :: struct {
     message: cstring,
 }
 
+DisplayVSyncMode :: enum {
+    Disabled = 0,
+    Enabled = 1,
+    Adaptive = -1,
+}
+
 DisplayInitConfig :: struct {
     title: cstring,
     width: i32,
@@ -86,12 +92,6 @@ display_swap_buffers :: proc(display: ^Display) -> DisplayError {
     }
 
     return { .None, nil }
-}
-
-DisplayVSyncMode :: enum {
-    Disabled = 0,
-    Enabled = 1,
-    Adaptive = -1,
 }
 
 display_set_vsync :: proc(display: ^Display, vsync_mode: DisplayVSyncMode) -> bool {

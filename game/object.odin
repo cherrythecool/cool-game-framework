@@ -2,10 +2,7 @@ package game
 
 import "../rendering"
 
-EmptyObject :: struct {}
-
 GameObjectData :: union {
-    EmptyObject,
     Sprite,
 }
 
