@@ -1,3 +1,0 @@
-[submodule "vendor/cherryaudio/src"]
-	path = vendor/cherryaudio/src
-	url = https://git.gay/cherry/cherryaudio.git

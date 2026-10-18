@@ -7,16 +7,16 @@ import "core:c"
 CHERRYAUDIO :: "src/build/cherryaudio.lib" when ODIN_OS == .Windows else "src/build/libcherryaudio.a"
 
 @(private)
-OPUS :: "src/build/vendor/opus-1.5.2/opus.lib" when ODIN_OS == .Windows else "src/build/vendor/opus-1.5.2/libopus.a"
+OPUS :: "src/build/opus.lib" when ODIN_OS == .Windows else "src/build/libopus.a"
 
 @(private)
-OPUSFILE :: "src/build/vendor/opusfile-master/opusfile.lib" when ODIN_OS == .Windows else "src/build/vendor/opusfile-master/libopusfile.a"
+OPUSFILE :: "src/build/opusfile.lib" when ODIN_OS == .Windows else "src/build/libopusfile.a"
 
 @(private)
-OGG :: "src/build/vendor/libogg-1.3.5/ogg.lib" when ODIN_OS == .Windows else "src/build/vendor/libogg-1.3.5/libogg.a"
+OGG :: "src/build/ogg.lib" when ODIN_OS == .Windows else "src/build/libogg.a"
 
 when !#exists(CHERRYAUDIO) || !#exists(OPUS) || !#exists(OPUSFILE) || !#exists(OGG) {
-	#panic("Could not find the compiled cherryaudio library, it can be compiled by running `cmake -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5` & `cmake --build build` in the src dir")
+	#panic("Could not find the compiled cherryaudio library, it can be compiled by running `cmake -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5` & `cmake --build build --config Release` in the src dir")
 }
 
 foreign import lib { CHERRYAUDIO, OPUS, OPUSFILE, OGG, }
