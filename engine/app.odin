@@ -9,26 +9,22 @@ import "core:math/linalg/glsl"
 import "vendor:sdl3"
 import gl "vendor:OpenGL"
 
-import "../rendering"
-import "../sound"
-import "../game"
-
 App :: struct {
     // app state
     running: bool,
 
     // rendering / display
-    main_display: rendering.Display,
+    main_display: Display,
     content_size: glsl.vec2,
     viewport: glsl.ivec4,
     window_size: glsl.ivec2,
 
     // sound
-    sound_device: sound.Device,
+    device: Device,
 
     // game state
-    current_scene: game.Scene,
-    globals: [dynamic]game.GameObject,
+    current_scene: Scene,
+    globals: [dynamic]GameObject,
 }
 
 AppInitConfig :: struct {
@@ -47,7 +43,7 @@ AppError :: struct {
 }
 
 AppInitResult :: union {
-    App, AppError, rendering.DisplayError, rendering.RendererError,
+    App, AppError, DisplayError, RendererError,
 }
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
@@ -63,54 +59,54 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
         return AppError { .BackendFailedToInitialize, sdl3.GetError() }
     }
 
-    device_result := sound.device_init()
+    device_result := device_init()
 
     switch result in device_result {
-        case sound.Device:
-            app.sound_device = result
+        case Device:
+            app.device = result
         case cstring:
             fmt.panicf("failed to initialize audio device, error: %s", result)
     }
 
     display_result := app_make_display(&app, { config.title, config.content_size.x, config.content_size.y, true })
     switch result in display_result {
-        case rendering.Display:
+        case Display:
             app.main_display = result
-        case rendering.DisplayError:
+        case DisplayError:
             return result
-        case rendering.RendererError:
+        case RendererError:
             return result
     }
 
     gl.load_up_to(3, 3, sdl3.gl_set_proc_address)
 
     if config.vsync {
-        if !rendering.display_set_vsync(&app.main_display, .Adaptive) {
-            rendering.display_set_vsync(&app.main_display, .Enabled)
+        if !display_set_vsync(&app.main_display, .Adaptive) {
+            display_set_vsync(&app.main_display, .Enabled)
         }
     } else {
-        if !rendering.display_set_vsync(&app.main_display, .Disabled) {
+        if !display_set_vsync(&app.main_display, .Disabled) {
             log.warnf("Failed to disable VSync with SDL3, reason: %s", sdl3.GetError())
         }
     }
 
-    bind_result := rendering.renderer_bind(&app.main_display)
+    bind_result := renderer_bind(&app.main_display)
     if bind_result != nil {
-        return bind_result.(rendering.RendererError)
+        return bind_result.(RendererError)
     }
 
     renderer := &app.main_display.renderer
-    renderer.default_quad = rendering.renderer_make_quad(&app.main_display)
+    renderer.default_quad = renderer_make_quad(&app.main_display)
     renderer.projection_matrix = glsl.mat4Ortho3d(0, app.content_size.x, app.content_size.y, 0, -1, 1)
 
     return app
 }
 
 app_deinit :: proc(app: ^App) {
-    game.scene_deinit(&app.current_scene)
-    game.assets_deinit()
-    rendering.display_deinit(&app.main_display)
-    sound.device_deinit(&app.sound_device)
+    scene_deinit(&app.current_scene)
+    assets_deinit()
+    display_deinit(&app.main_display)
+    device_deinit(&app.device)
     sdl3.Quit()
 }
 
@@ -175,15 +171,15 @@ app_poll :: proc(app: ^App) {
 }
 
 app_update :: proc(app: ^App, delta_seconds: f64) {
-    game.scene_update(&app.current_scene, delta_seconds)
+    scene_update(&app.current_scene, delta_seconds)
 }
 
 app_draw :: proc(app: ^App) {
     app_clear_screen(app)
 
-    game.scene_draw(&app.current_scene, &app.main_display.renderer)
+    scene_draw(&app.current_scene, &app.main_display.renderer)
 
-    swap_error := rendering.display_swap_buffers(&app.main_display)
+    swap_error := display_swap_buffers(&app.main_display)
     if swap_error.type != .None {
         if swap_error.message != nil {
             fmt.panicf("Failed to swap window buffers, error: %v, error message: %s", swap_error.type, swap_error.message)
@@ -196,7 +192,7 @@ app_draw :: proc(app: ^App) {
 app_clear_screen :: proc(app: ^App) {
     gl.Viewport(0, 0, app.window_size.x, app.window_size.y)
 
-    rendering.renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.0, 0.0, 0.0, 1.0 })
+    renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.0, 0.0, 0.0, 1.0 })
 
     {
         gl.Enable(gl.SCISSOR_TEST)
@@ -204,18 +200,18 @@ app_clear_screen :: proc(app: ^App) {
 
         gl.Viewport(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
         gl.Scissor(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
-        rendering.renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.6, 0.6, 0.6, 1.0 })
+        renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.6, 0.6, 0.6, 1.0 })
     }
 }
 
-app_make_display :: proc(app: ^App, config: rendering.DisplayInitConfig) -> union { rendering.Display, rendering.DisplayError, rendering.RendererError } {
-    display_result := rendering.display_init(config)
+app_make_display :: proc(app: ^App, config: DisplayInitConfig) -> union { Display, DisplayError, RendererError } {
+    display_result := display_init(config)
     switch result in display_result {
-        case rendering.Display:
+        case Display:
             return result
-        case rendering.DisplayError:
+        case DisplayError:
             return result
-        case rendering.RendererError:
+        case RendererError:
             return result
         case:
             return nil
