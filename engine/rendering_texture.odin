@@ -2,13 +2,13 @@ package engine
 
 import "core:c"
 
-import "vendor:sdl3"
-import "vendor:sdl3/image"
+import stbi "vendor:stb/image"
 import gl "vendor:OpenGL"
 
 Texture :: struct {
     width: c.int,
     height: c.int,
+    channels: c.int,
     id: u32,
 }
 
@@ -28,30 +28,9 @@ TextureLoadResult :: union {
 }
 
 texture_load :: proc(path: cstring) -> TextureLoadResult {
-    surface := sdl3.LoadSurface(path)
-    if surface == nil {
-        surface = image.Load(path)
-
-        if surface == nil {
-            return TextureLoadError { .BackendFailedToLoadImage, sdl3.GetError() }
-        }
-    }
-
-    defer sdl3.DestroySurface(surface)
-
-    if surface.format != .RGBA8888 && surface.format != .RGB24 {
-        new_surface := sdl3.ConvertSurface(surface, .RGBA8888)
-        if new_surface == nil {
-            return TextureLoadError { .BackendFailedToConvertImage, sdl3.GetError() }
-        }
-
-        sdl3.DestroySurface(surface)
-        surface = new_surface
-    }
-
     texture: Texture
-    texture.width = surface.w
-    texture.height = surface.h
+    pixels := stbi.load(path, &texture.width, &texture.height, &texture.channels, 0)
+    defer stbi.image_free(pixels)
 
     gl.GenTextures(1, &texture.id)
 
@@ -64,11 +43,16 @@ texture_load :: proc(path: cstring) -> TextureLoadResult {
     gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     
     gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-    #partial switch surface.format {
-        case .RGB24:
-            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, surface.w, surface.h, 0, gl.RGB, gl.UNSIGNED_BYTE, surface.pixels)
-        case .RGBA8888:
-            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, surface.w, surface.h, 0, gl.RGBA, gl.UNSIGNED_BYTE, surface.pixels)
+
+    switch texture.channels {
+        case 1:
+            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RED, texture.width, texture.height, 0, gl.RED, gl.UNSIGNED_BYTE, pixels)
+        case 2:
+            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RG, texture.width, texture.height, 0, gl.RG, gl.UNSIGNED_BYTE, pixels)
+        case 3:
+            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB, texture.width, texture.height, 0, gl.RGB, gl.UNSIGNED_BYTE, pixels)
+        case 4:
+            gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texture.width, texture.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
         case:
             return TextureLoadError { .UnsupportedImageFormat, nil }
     }
