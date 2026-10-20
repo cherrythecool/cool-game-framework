@@ -37,17 +37,14 @@ main :: proc() {
 
     context.logger = log.create_console_logger()
 
-    app: engine.App
     app_result := engine.app_init({
-        title = "cgf version idek",
+        title = "the fard rewrite number 85",
         content_size = { 1280, 720 },
         vsync = true,
     })
-    defer engine.app_deinit(&app)
+    defer engine.app_deinit()
 
     switch result in app_result {
-        case engine.App:
-            app = result
         case engine.AppError:
             fmt.panicf("Failed to initialize app, error: %v", result)
         case engine.DisplayError:
@@ -56,26 +53,29 @@ main :: proc() {
             fmt.panicf("Failed to initialize app renderer, error: %v", result)
     }
 
-    song: engine.CherryStream
-    song_result := engine.stream_init(&app.device, "assets/TestSong.ogg")
-    defer engine.stream_deinit(&song)
+    song: engine.SoundStream
+    song_result := engine.sound_stream_init(&engine.App.sound_device, "assets/TestSong.ogg", true)
+    defer engine.sound_stream_deinit(&song)
     
     switch result in song_result {
-        case engine.CherryStream:
+        case engine.SoundStream:
             song = result
-        case cstring:
+        case engine.SoundStreamInitError:
             log.warnf("Failed to load song, error: %s", result)
     }
 
-    engine.device_resume_playback(&app.device)
+    engine.sound_stream_set_volume(&song, 0.5)
+    engine.sound_stream_set_speed_scale(&song, 1.5)
+    engine.sound_stream_seek(&song, 10.0)
+    engine.sound_device_resume_playback(&engine.App.sound_device)
 
     for i in 0..<5 {
         dog_sprite := engine.sprite_init("assets/Dog.png")
         dog_data := engine.sprite_get_data(&dog_sprite)
         dog_data.position = {f32(i * 300) + rand.float32_range(-64, 64), rand.float32_range(0, 720)}
         dog_data.rotation = rand.float32_range(-180, 180)
-        append(&app.current_scene.objects, dog_sprite)
+        append(&engine.App.current_scene.objects, dog_sprite)
     }
 
-    engine.app_run(&app)
+    engine.app_run()
 }

@@ -1,7 +1,6 @@
 package engine
 
 import "core:time"
-import "core:slice"
 import "core:fmt"
 import "core:log"
 
@@ -9,7 +8,27 @@ import "core:math/linalg/glsl"
 import "vendor:sdl3"
 import gl "vendor:OpenGL"
 
-App :: struct {
+AppInitConfig :: struct {
+    title: cstring,
+    content_size: glsl.ivec2,
+    vsync: bool,
+}
+
+AppErrorType :: enum {
+    BackendFailedToInitialize,
+    AppAlreadyExists,
+}
+
+AppError :: struct {
+    type: AppErrorType,
+    message: cstring,
+}
+
+AppInitResult :: union {
+    AppError, DisplayError, RendererError,
+}
+
+App: struct {
     // app state
     running: bool,
 
@@ -20,58 +39,41 @@ App :: struct {
     window_size: glsl.ivec2,
 
     // sound
-    device: Device,
+    sound_device: SoundDevice,
 
     // game state
     current_scene: Scene,
     globals: [dynamic]GameObject,
-}
-
-AppInitConfig :: struct {
-    title: cstring,
-    content_size: glsl.ivec2,
-    vsync: bool,
-}
-
-AppErrorType :: enum {
-    BackendFailedToInitialize,
-}
-
-AppError :: struct {
-    type: AppErrorType,
-    message: cstring,
-}
-
-AppInitResult :: union {
-    App, AppError, DisplayError, RendererError,
-}
+} = {}
 
 app_init :: proc(config: AppInitConfig) -> AppInitResult {
-    app: App = {
-        running = true,
-        content_size = { f32(config.content_size.x), f32(config.content_size.y) },
+    if App.running {
+        return AppError { .AppAlreadyExists, "" }
     }
 
-    app.viewport = {0, 0, config.content_size.x, config.content_size.y}
-    app.window_size = config.content_size
+    App.running = true
+    App.content_size = { f32(config.content_size.x), f32(config.content_size.y) }
+
+    App.viewport = {0, 0, config.content_size.x, config.content_size.y}
+    App.window_size = config.content_size
 
     if !sdl3.Init(sdl3.INIT_VIDEO | sdl3.INIT_AUDIO) {
         return AppError { .BackendFailedToInitialize, sdl3.GetError() }
     }
 
-    device_result := device_init()
+    device_result := sound_device_init()
 
     switch result in device_result {
-        case Device:
-            app.device = result
+        case SoundDevice:
+            App.sound_device = result
         case cstring:
             fmt.panicf("failed to initialize audio device, error: %s", result)
     }
 
-    display_result := app_make_display(&app, { config.title, config.content_size.x, config.content_size.y, true })
+    display_result := app_make_display({ config.title, config.content_size.x, config.content_size.y, true })
     switch result in display_result {
         case Display:
-            app.main_display = result
+            App.main_display = result
         case DisplayError:
             return result
         case RendererError:
@@ -81,36 +83,36 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
     gl.load_up_to(3, 3, sdl3.gl_set_proc_address)
 
     if config.vsync {
-        if !display_set_vsync(&app.main_display, .Adaptive) {
-            display_set_vsync(&app.main_display, .Enabled)
+        if !display_set_vsync(&App.main_display, .Adaptive) {
+            display_set_vsync(&App.main_display, .Enabled)
         }
     } else {
-        if !display_set_vsync(&app.main_display, .Disabled) {
+        if !display_set_vsync(&App.main_display, .Disabled) {
             log.warnf("Failed to disable VSync with SDL3, reason: %s", sdl3.GetError())
         }
     }
 
-    bind_result := renderer_bind(&app.main_display)
+    bind_result := renderer_bind(&App.main_display)
     if bind_result != nil {
         return bind_result.(RendererError)
     }
 
-    renderer := &app.main_display.renderer
-    renderer.default_quad = renderer_make_quad(&app.main_display)
-    renderer.projection_matrix = glsl.mat4Ortho3d(0, app.content_size.x, app.content_size.y, 0, -1, 1)
+    renderer := &App.main_display.renderer
+    renderer.default_quad = renderer_make_quad(&App.main_display)
+    renderer.projection_matrix = glsl.mat4Ortho3d(0, App.content_size.x, App.content_size.y, 0, -1, 1)
 
-    return app
+    return nil
 }
 
-app_deinit :: proc(app: ^App) {
-    scene_deinit(&app.current_scene)
+app_deinit :: proc() {
+    scene_deinit(&App.current_scene)
     assets_deinit()
-    display_deinit(&app.main_display)
-    device_deinit(&app.device)
+    display_deinit(&App.main_display)
+    sound_device_deinit(&App.sound_device)
     sdl3.Quit()
 }
 
-app_run :: proc(app: ^App) {
+app_run :: proc() {
     timer: f32 = 0.0
 
     last_ticks := sdl3.GetTicksNS()
@@ -120,13 +122,13 @@ app_run :: proc(app: ^App) {
     current_frame := sdl3.GetTicksNS()
     delta_seconds: f64 = 0
 
-    for app.running {
+    for App.running {
         current_frame = sdl3.GetTicksNS()
         delta_seconds = f64(current_frame - previous_frame) / f64(time.Second / time.Nanosecond)
 
-        app_poll(app)
-        app_update(app, delta_seconds)
-        app_draw(app)
+        app_poll()
+        app_update(delta_seconds)
+        app_draw()
 
         if sdl3.GetTicksNS() - last_ticks >= 1_000_000 * 1000 {
             fmt.printfln("%v FPS", frames)
@@ -141,8 +143,9 @@ app_run :: proc(app: ^App) {
     }
 }
 
-app_poll :: proc(app: ^App) {
+app_poll :: proc() {
     event: sdl3.Event
+
     for sdl3.PollEvent(&event) {
         #partial switch event.type {
             case .KEY_DOWN:
@@ -151,35 +154,35 @@ app_poll :: proc(app: ^App) {
                 w := event.window.data1
                 h := event.window.data2
 
-                app.window_size = {w, h}
+                App.window_size = {w, h}
 
-                if (f32(w) / f32(h) > f32(app.content_size.x) / f32(app.content_size.y)) {
-                    w = i32(f32(app.content_size.x) * (f32(h) / f32(app.content_size.y)))
+                if (f32(w) / f32(h) > f32(App.content_size.x) / f32(App.content_size.y)) {
+                    w = i32(f32(App.content_size.x) * (f32(h) / f32(App.content_size.y)))
                 } else {
-                    h = i32(f32(app.content_size.y) * (f32(w) / f32(app.content_size.x)))
+                    h = i32(f32(App.content_size.y) * (f32(w) / f32(App.content_size.x)))
                 }
 
-                app.viewport.z = w
-                app.viewport.w = h
+                App.viewport.z = w
+                App.viewport.w = h
 
-                app.viewport.x = (app.window_size.x - app.viewport.z) / 2
-                app.viewport.y = (app.window_size.y - app.viewport.w) / 2
+                App.viewport.x = (App.window_size.x - App.viewport.z) / 2
+                App.viewport.y = (App.window_size.y - App.viewport.w) / 2
             case .QUIT:
-                app.running = false
+                App.running = false
         }
     }
 }
 
-app_update :: proc(app: ^App, delta_seconds: f64) {
-    scene_update(&app.current_scene, delta_seconds)
+app_update :: proc(delta_seconds: f64) {
+    scene_update(&App.current_scene, delta_seconds)
 }
 
-app_draw :: proc(app: ^App) {
-    app_clear_screen(app)
+app_draw :: proc() {
+    app_clear_screen()
 
-    scene_draw(&app.current_scene, &app.main_display.renderer)
+    scene_draw(&App.current_scene, &App.main_display.renderer)
 
-    swap_error := display_swap_buffers(&app.main_display)
+    swap_error := display_swap_buffers(&App.main_display)
     if swap_error.type != .None {
         if swap_error.message != nil {
             fmt.panicf("Failed to swap window buffers, error: %v, error message: %s", swap_error.type, swap_error.message)
@@ -189,22 +192,22 @@ app_draw :: proc(app: ^App) {
     }
 }
 
-app_clear_screen :: proc(app: ^App) {
-    gl.Viewport(0, 0, app.window_size.x, app.window_size.y)
+app_clear_screen :: proc() {
+    gl.Viewport(0, 0, App.window_size.x, App.window_size.y)
 
-    renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.0, 0.0, 0.0, 1.0 })
+    renderer_clear_color_buffer(&App.main_display.renderer, glsl.vec4 { 0.0, 0.0, 0.0, 1.0 })
 
     {
         gl.Enable(gl.SCISSOR_TEST)
         defer gl.Disable(gl.SCISSOR_TEST)
 
-        gl.Viewport(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
-        gl.Scissor(app.viewport.x, app.viewport.y, app.viewport.z, app.viewport.w)
-        renderer_clear_color_buffer(&app.main_display.renderer, glsl.vec4 { 0.6, 0.6, 0.6, 1.0 })
+        gl.Viewport(App.viewport.x, App.viewport.y, App.viewport.z, App.viewport.w)
+        gl.Scissor(App.viewport.x, App.viewport.y, App.viewport.z, App.viewport.w)
+        renderer_clear_color_buffer(&App.main_display.renderer, glsl.vec4 { 0.6, 0.6, 0.6, 1.0 })
     }
 }
 
-app_make_display :: proc(app: ^App, config: DisplayInitConfig) -> union { Display, DisplayError, RendererError } {
+app_make_display :: proc(config: DisplayInitConfig) -> union { Display, DisplayError, RendererError } {
     display_result := display_init(config)
     switch result in display_result {
         case Display:

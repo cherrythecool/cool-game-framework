@@ -3,13 +3,13 @@ package engine
 import "core:log"
 import "vendor:sdl3"
 
-Device :: struct {
+SoundDevice :: struct {
     id: sdl3.AudioDeviceID,
     spec: sdl3.AudioSpec,
 }
 
-device_init :: proc(sample_rate: i32 = 48_000, channels: i32 = 2) -> union { Device, cstring } {
-    device := Device {
+sound_device_init :: proc(sample_rate: i32 = 48_000, channels: i32 = 2) -> union { SoundDevice, cstring } {
+    device := SoundDevice {
         spec = sdl3.AudioSpec {
             format = .F32,
             channels = channels,
@@ -25,20 +25,20 @@ device_init :: proc(sample_rate: i32 = 48_000, channels: i32 = 2) -> union { Dev
     return device
 }
 
-device_deinit :: proc(device: ^Device) {
+sound_device_deinit :: proc(device: ^SoundDevice) {
     if device.id != 0 {
         sdl3.CloseAudioDevice(device.id)
         device.id = 0
     }
 }
 
-device_resume_playback :: proc(device: ^Device) {
+sound_device_resume_playback :: proc(device: ^SoundDevice) {
     if device.id != 0 && !sdl3.ResumeAudioDevice(device.id) {
         log.warnf("Failed to resume SDL3 Audio Device: %s", sdl3.GetError())
     }
 }
 
-device_pause_playback :: proc(device: ^Device) {
+sound_device_pause_playback :: proc(device: ^SoundDevice) {
     if device.id != 0 && !sdl3.PauseAudioDevice(device.id) {
         log.warnf("Failed to pause SDL3 Audio Device: %s", sdl3.GetError())
     }
