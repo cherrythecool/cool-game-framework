@@ -33,7 +33,7 @@ sound_stream_sdl_callback :: proc "c" (userdata: rawptr, stream: ^sdl3.AudioStre
     }
 }
 
-sound_stream_init :: proc(target_device: ^SoundDevice, file_path: cstring, loop: bool = false) -> union { SoundStream, SoundStreamInitError } {
+sound_stream_init :: proc(file_path: cstring, loop: bool = false) -> union { SoundStream, SoundStreamInitError } {
     raw_stream := cherryaudio.stream_file(file_path, .DETECT)
     if raw_stream.meta.sample_rate == 0 {
         return .BackendFailedToLoad
@@ -51,14 +51,14 @@ sound_stream_init :: proc(target_device: ^SoundDevice, file_path: cstring, loop:
         freq = i32(stream_ptr.meta.sample_rate),
     }
 
-    stream.output_stream = sdl3.CreateAudioStream(&src_spec, &target_device.spec)
+    stream.output_stream = sdl3.CreateAudioStream(&src_spec, &SoundDevice.spec)
     if stream.output_stream == nil {
         return .FailedToCreateAudioStream
     }
 
     sdl3.SetAudioStreamGetCallback(stream.output_stream, sound_stream_sdl_callback, stream_ptr)
     
-    if !sdl3.BindAudioStream(target_device.id, stream.output_stream) {
+    if !sdl3.BindAudioStream(SoundDevice.id, stream.output_stream) {
         return .FailedToBindAudioStream
     }
 

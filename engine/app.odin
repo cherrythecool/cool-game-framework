@@ -38,9 +38,6 @@ App: struct {
     viewport: glsl.ivec4,
     window_size: glsl.ivec2,
 
-    // sound
-    sound_device: SoundDevice,
-
     // game state
     current_scene: Scene,
     globals: [dynamic]GameObject,
@@ -64,8 +61,6 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
     device_result := sound_device_init()
 
     switch result in device_result {
-        case SoundDevice:
-            App.sound_device = result
         case cstring:
             fmt.panicf("failed to initialize audio device, error: %s", result)
     }
@@ -108,7 +103,7 @@ app_deinit :: proc() {
     scene_deinit(&App.current_scene)
     assets_deinit()
     display_deinit(&App.main_display)
-    sound_device_deinit(&App.sound_device)
+    sound_device_deinit()
     sdl3.Quit()
 }
 

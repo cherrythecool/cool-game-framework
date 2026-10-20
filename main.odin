@@ -53,21 +53,14 @@ main :: proc() {
             fmt.panicf("Failed to initialize app renderer, error: %v", result)
     }
 
-    song: engine.SoundStream
-    song_result := engine.sound_stream_init(&engine.App.sound_device, "assets/TestSong.ogg", true)
-    defer engine.sound_stream_deinit(&song)
-    
-    switch result in song_result {
-        case engine.SoundStream:
-            song = result
-        case engine.SoundStreamInitError:
-            log.warnf("Failed to load song, error: %s", result)
-    }
+    song_asset := engine.assets_get_sound_stream("assets/TestSong.ogg").(^engine.Asset)
+    defer engine.assets_release(song_asset)
 
+    song := song_asset.data.(engine.SoundStream)
     engine.sound_stream_set_volume(&song, 0.5)
     engine.sound_stream_set_speed_scale(&song, 1.5)
     engine.sound_stream_seek(&song, 10.0)
-    engine.sound_device_resume_playback(&engine.App.sound_device)
+    engine.sound_device_resume_playback()
 
     for i in 0..<5 {
         dog_sprite := engine.sprite_init("assets/Dog.png")

@@ -8,6 +8,7 @@ Asset :: struct {
     data: union {
         Texture,
         ShaderProgram,
+        SoundStream,
     },
     references: u64,
 }
@@ -52,21 +53,39 @@ assets_release :: proc(asset: ^Asset) {
                 texture_deinit(data)
             case ShaderProgram:
                 shader_free(&data)
+            case SoundStream:
+                sound_stream_deinit(&data)
         }
 
         free(asset)
     }
 }
 
-assets_get_texture :: proc(path: string) -> Maybe(^Asset) {
-    if path in loader.assets {
-        _, is_texture := loader.assets[path].data.(Texture)
-        if is_texture {
-            loader.assets[path].references += 1
-            return loader.assets[path]
+assets_check :: proc(key: string, $T: typeid) -> union { ^Asset, bool } {
+    if key in loader.assets {
+        _, is_type := loader.assets[key].data.(T)
+        if is_type {
+            return loader.assets[key]
         } else {
-            return nil
+            return true
         }
+    }
+
+    return false
+}
+
+assets_get_texture :: proc(path: string) -> Maybe(^Asset) {
+    asset_or_exists := assets_check(path, Texture)
+
+    switch value in asset_or_exists {
+        case ^Asset:
+            value.references += 1
+            return value
+        case bool:
+            // in case the asset at the given key isn't the right type
+            if value {
+                return nil
+            }
     }
 
     c_path := strings.clone_to_cstring(path)
@@ -88,14 +107,17 @@ assets_get_texture :: proc(path: string) -> Maybe(^Asset) {
 }
 
 assets_get_shader :: proc(id: string, fragment_path: string, vertex_path: string) -> Maybe(^Asset) {
-    if id in loader.assets {
-        _, is_shader := loader.assets[id].data.(ShaderProgram)
-        if is_shader {
-            loader.assets[id].references += 1
-            return loader.assets[id]
-        } else {
-            return nil
-        }
+    asset_or_exists := assets_check(id, ShaderProgram)
+
+    switch value in asset_or_exists {
+        case ^Asset:
+            value.references += 1
+            return value
+        case bool:
+            // in case the asset at the given key isn't the right type
+            if value {
+                return nil
+            }
     }
 
     asset := new(Asset)
@@ -114,6 +136,39 @@ assets_get_shader :: proc(id: string, fragment_path: string, vertex_path: string
             return nil
         case os.Error:
             fmt.eprintfln("Failed to read file from os, error: %v", result)
+            return nil
+    }
+
+    return asset
+}
+
+assets_get_sound_stream :: proc(path: string) -> Maybe(^Asset) {
+    asset_or_exists := assets_check(path, SoundStream)
+
+    switch value in asset_or_exists {
+        case ^Asset:
+            value.references += 1
+            return value
+        case bool:
+            // in case the asset at the given key isn't the right type
+            if value {
+                return nil
+            }
+    }
+
+    asset := new(Asset)
+
+    cstring_path := strings.clone_to_cstring(path)
+    defer delete(cstring_path)
+
+    sound_stream_result := sound_stream_init(cstring_path)
+    switch result in sound_stream_result {
+        case SoundStream:
+            asset.references += 1
+            asset.data = result
+            loader.assets[path] = asset
+        case SoundStreamInitError:
+            fmt.eprintfln("Failed to init sound stream, error: %v", result)
             return nil
     }
 
