@@ -28,7 +28,7 @@ int _cherry_vorbis_decode_memory_f32(const unsigned char *mem, int len, int *cha
 cherry_file cherry_load_file(const char *path, cherry_file_format file_format, cherry_pcm_format requested_pcm_format) {
     cherry_file file = (cherry_file){0};
     switch (file_format) {
-        case DETECT:
+        case DETECT: {
             cherry_file_format detected_format = _cherry_format_from_path(path);
             if (detected_format == DETECT) {
                 return file;
@@ -36,7 +36,8 @@ cherry_file cherry_load_file(const char *path, cherry_file_format file_format, c
 
             return cherry_load_file(path, detected_format, requested_pcm_format);
             break;
-        case WAV:
+        }
+        case WAV: {
             switch (requested_pcm_format) {
                 case FLOAT_32:
                     file.pcm.data = drwav_open_file_and_read_pcm_frames_f32(path, &file.meta.channels, &file.meta.sample_rate, &file.meta.sample_count, NULL);
@@ -50,7 +51,8 @@ cherry_file cherry_load_file(const char *path, cherry_file_format file_format, c
 
             file.pcm.format = requested_pcm_format;
             break;
-        case FLAC:
+        }
+        case FLAC: {
             switch (requested_pcm_format) {
                 case FLOAT_32:
                     file.pcm.data = drflac_open_file_and_read_pcm_frames_f32(path, &file.meta.channels, &file.meta.sample_rate, &file.meta.sample_count, NULL);
@@ -64,7 +66,8 @@ cherry_file cherry_load_file(const char *path, cherry_file_format file_format, c
 
             file.pcm.format = requested_pcm_format;
             break;
-        case MP3:
+        }
+        case MP3: {
             drmp3_config config;
             switch (requested_pcm_format) {
                 case FLOAT_32:
@@ -83,21 +86,26 @@ cherry_file cherry_load_file(const char *path, cherry_file_format file_format, c
 
             file.pcm.format = requested_pcm_format;
             break;
-        case VORBIS:
+        }
+        case VORBIS: {
+            int channels, sample_rate;
             switch (requested_pcm_format) {
                 case FLOAT_32:
-                    file.meta.sample_count = _cherry_vorbis_decode_file_f32(path, &file.meta.channels, &file.meta.sample_rate, (float**)&file.pcm.data);
-                    file.pcm.size = file.meta.sample_count * file.meta.channels * sizeof(float);
+                    file.meta.sample_count = _cherry_vorbis_decode_file_f32(path, &channels, &sample_rate, (float**)&file.pcm.data);
+                    file.pcm.size = file.meta.sample_count * channels * sizeof(float);
                     break;
                 case INT_16:
-                    file.meta.sample_count = stb_vorbis_decode_filename(path, &file.meta.channels, &file.meta.sample_rate, (short**)&file.pcm.data);
-                    file.pcm.size = file.meta.sample_count * file.meta.channels * sizeof(short);
+                    file.meta.sample_count = stb_vorbis_decode_filename(path, &channels, &sample_rate, (short**)&file.pcm.data);
+                    file.pcm.size = file.meta.sample_count * channels * sizeof(short);
                     break;
             }
 
+            file.meta.channels = channels;
+            file.meta.sample_rate = sample_rate;
             file.pcm.format = requested_pcm_format;
             break;
-        case OPUS:
+        }
+        case OPUS: {
             OggOpusFile *opus = op_open_file(path, NULL);
             file.meta.channels = op_channel_count(opus, -1);
             file.meta.sample_rate = 48000;
@@ -136,6 +144,7 @@ cherry_file cherry_load_file(const char *path, cherry_file_format file_format, c
             file.pcm.format = requested_pcm_format;
             op_free(opus);
             break;
+        }
     }
 
     return file;
@@ -146,7 +155,7 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
     switch (file_format) {
         case DETECT:
             break;
-        case WAV:
+        case WAV: {
             switch (requested_pcm_format) {
                 case FLOAT_32:
                     file.pcm.data = drwav_open_memory_and_read_pcm_frames_f32(memory, size,
@@ -162,7 +171,8 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
 
             file.pcm.format = requested_pcm_format;
             break;
-        case FLAC:
+        }
+        case FLAC: {
             switch (requested_pcm_format) {
                 case FLOAT_32:
                     file.pcm.data = drflac_open_memory_and_read_pcm_frames_f32(memory, size,
@@ -178,7 +188,8 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
 
             file.pcm.format = requested_pcm_format;
             break;
-        case MP3:
+        }
+        case MP3: {
             drmp3_config config;
             switch (requested_pcm_format) {
                 case FLOAT_32:
@@ -197,21 +208,27 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
 
             file.pcm.format = requested_pcm_format;
             break;
-        case VORBIS:
+        }
+        case VORBIS: {
+            int channels, sample_rate;
+
             switch (requested_pcm_format) {
                 case FLOAT_32:
-                    file.meta.sample_count = _cherry_vorbis_decode_memory_f32(memory, size, &file.meta.channels, &file.meta.sample_rate, (float**)&file.pcm.data);
-                    file.pcm.size = file.meta.sample_count * file.meta.channels * sizeof(float);
+                    file.meta.sample_count = _cherry_vorbis_decode_memory_f32(memory, size, &channels, &sample_rate, (float**)&file.pcm.data);
+                    file.pcm.size = file.meta.sample_count * channels * sizeof(float);
                     break;
                 case INT_16:
-                    file.meta.sample_count = stb_vorbis_decode_memory(memory, size, &file.meta.channels, &file.meta.sample_rate, (short**)&file.pcm.data);
-                    file.pcm.size = file.meta.sample_count * file.meta.channels * sizeof(short);
+                    file.meta.sample_count = stb_vorbis_decode_memory(memory, size, &channels, &sample_rate, (short**)&file.pcm.data);
+                    file.pcm.size = file.meta.sample_count * channels * sizeof(short);
                     break;
             }
 
+            file.meta.channels = channels;
+            file.meta.sample_rate = sample_rate;
             file.pcm.format = requested_pcm_format;
             break;
-        case OPUS:
+        }
+        case OPUS: {
             OggOpusFile *opus = op_open_memory(memory, size, NULL);
             file.meta.channels = op_channel_count(opus, -1);
             file.meta.sample_rate = 48000;
@@ -250,6 +267,7 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
             file.pcm.format = requested_pcm_format;
             op_free(opus);
             break;
+        }
     }
 
     return file;
@@ -258,7 +276,7 @@ cherry_file cherry_load_file_from_memory(void *memory, cherry_size size, cherry_
 cherry_stream cherry_stream_file(const char *path, cherry_file_format file_format) {
     cherry_stream stream = (cherry_stream){0};
     switch (file_format) {
-        case DETECT:
+        case DETECT: {
             cherry_file_format detected_format = _cherry_format_from_path(path);
             if (detected_format == DETECT) {
                 return stream;
@@ -266,6 +284,7 @@ cherry_stream cherry_stream_file(const char *path, cherry_file_format file_forma
 
             return cherry_stream_file(path, detected_format);
             break;
+        }
         case WAV:
             stream.file_format = file_format;
             stream.data = malloc(sizeof(drwav));
