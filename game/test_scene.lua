@@ -32,6 +32,13 @@ function load()
     printTable(bunny)
     cosmo.pushObject(bunny)
     cosmo.pushObject(cosmo.newSprite(128, 128, cosmo.getTexture("assets/dog.png")))
+
+    print("bunny.centered = " .. tostring(bunny.centered))
+    print("bunny.rotation = " .. tostring(bunny.rotation))
+    print("bunny.position = ")
+    printTable(bunny.position, "\t")
+    print("bunny.scale = ")
+    printTable(bunny.scale, "\t")
 end
 
 function update(delta)

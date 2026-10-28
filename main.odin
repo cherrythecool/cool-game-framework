@@ -41,6 +41,50 @@ lua_call_function_empty :: proc(state: ^lua.State, name: cstring) -> bool {
     }
 }
 
+push :: proc {
+    lua.pushboolean,
+    lua.pushcfunction,
+    lua.pushnil,
+    lua.pushnumber,
+    lua.pushstring,
+}
+
+lua_sprite_index :: proc "c" (state: ^lua.State) -> i32 {
+    context = engine.App.ctx
+
+    // index 1 is the obj being indexed
+    property := lua.L_optstring(state, 2, "")
+    lua.pushstring(state, "ptr")
+    lua.gettable(state, 1)
+    sprite_property := cast(^engine.GameObject) lua.touserdata(state, -1)
+    sprite_data := engine.sprite_get_data(sprite_property)
+
+    switch property {
+        case "centered":
+            lua.pushboolean(state, auto_cast sprite_data.centered)
+            return 1
+        case "rotation":
+            lua.pushnumber(state, auto_cast sprite_data.rotation)
+            return 1
+        case "position":
+            lua.newtable(state)
+            lua.pushnumber(state, auto_cast sprite_data.position.x)
+            lua.seti(state, -2, 1)
+            lua.pushnumber(state, auto_cast sprite_data.position.y)
+            lua.seti(state, -2, 2)
+            return 1
+        case "scale":
+            lua.newtable(state)
+            lua.pushnumber(state, auto_cast sprite_data.scale.x)
+            lua.seti(state, -2, 1)
+            lua.pushnumber(state, auto_cast sprite_data.scale.y)
+            lua.seti(state, -2, 2)
+            return 1
+    }
+
+    return 0
+}
+
 lua_new_sprite :: proc "c" (state: ^lua.State) -> i32 {
     context = engine.App.ctx
 
@@ -63,6 +107,11 @@ lua_new_sprite :: proc "c" (state: ^lua.State) -> i32 {
     lua.newtable(state)
     lua.pushlightuserdata(state, sprite_cloned)
     lua.setfield(state, -2, "ptr")
+
+    lua.newtable(state)
+    lua.pushcfunction(state, lua_sprite_index)
+    lua.setfield(state, -2, "__index")
+    lua.setmetatable(state, -2)
 
     return 1
 }
@@ -122,13 +171,14 @@ main :: proc() {
     defer lua.close(state)
     lua.L_openlibs(state)
 
-    lua.newtable(state)
-    lua.pushcfunction(state, lua_new_sprite)
-    lua.setfield(state, 1, "newSprite")
-    lua.pushcfunction(state, lua_get_texture)
-    lua.setfield(state, 1, "getTexture")
-    lua.pushcfunction(state, lua_push_object)
-    lua.setfield(state, 1, "pushObject")
+    cosmo_lib := []lua.L_Reg {
+        {"newSprite", lua_new_sprite},
+        {"getTexture", lua_get_texture},
+        {"pushObject", lua_push_object},
+        {nil, nil},
+    }
+
+    lua.L_newlib(state, cosmo_lib)
     lua.setglobal(state, "cosmo")
 
     handle_fatal_lua_error(state, lua.L_dofile(state, "game/test_scene.lua"), "failed to load lua file")

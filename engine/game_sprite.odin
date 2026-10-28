@@ -1,8 +1,6 @@
 package engine
 
-import "core:math/rand"
 import "core:math"
-import "core:fmt"
 import "core:math/linalg/glsl"
 
 Sprite :: struct {
@@ -18,8 +16,6 @@ Sprite :: struct {
 
     offset: [2]f32,
     centered: bool,
-
-    time: f64,
 }
 
 sprite_init :: proc(texture: Maybe(^Asset)) -> GameObject {
@@ -37,7 +33,6 @@ sprite_init :: proc(texture: Maybe(^Asset)) -> GameObject {
 
             offset = 0,
             centered = true,
-            time = 0,
         },
 
         ready = sprite_ready,
