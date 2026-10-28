@@ -22,10 +22,10 @@ Sprite :: struct {
     time: f64,
 }
 
-sprite_init :: proc(path: string) -> GameObject {
+sprite_init :: proc(texture: Maybe(^Asset)) -> GameObject {
     object := GameObject {
         data = Sprite {
-            texture = assets_get_texture(path),
+            texture = texture,
             shader = assets_get_shader("defaultSprite", "assets/shaders/sprite.frag", "assets/shaders/sprite.vert"),
             region = 0,
             flipped = false,
@@ -51,12 +51,7 @@ sprite_init :: proc(path: string) -> GameObject {
 
 sprite_ready :: proc(self: ^GameObject) {}
 
-sprite_update :: proc(self: ^GameObject, delta: f64) {
-    data := sprite_get_data(self)
-    data.time += delta * rand.float64_range(0.5, 2.0)
-    data.rotation += f32(delta * 45) * rand.float32_range(0.5, 2.0)
-    data.scale = math.sin_f32(f32(data.time)) + 1.5
-}
+sprite_update :: proc(self: ^GameObject, delta: f64) {}
 
 sprite_draw :: proc(self: ^GameObject, renderer: ^Renderer) {
     sprite := self.data.(Sprite)

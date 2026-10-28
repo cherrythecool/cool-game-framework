@@ -1,5 +1,6 @@
 package engine
 
+import "core:mem"
 import "core:fmt"
 import "core:strings"
 import "core:os"
@@ -29,7 +30,15 @@ AssetLoader :: struct {
     return nil
 }
 
+assets_init :: proc() {
+    loader.assets = make(map[string]^Asset)
+}
+
 assets_deinit :: proc() {
+    for key in loader.assets {
+        assets_release(loader.assets[key])
+    }
+
     delete(loader.assets)
 }
 
@@ -43,7 +52,15 @@ assets_release :: proc(asset: ^Asset) {
     if asset.references == 0 {
         key := get_path_from_asset(asset)
         if key != nil {
-            delete_key(&loader.assets, key.(string))
+            deleted_key, _ := delete_key(&loader.assets, key.(string))
+
+            // sometimes you might heap allocate or stack allocate a string
+            // and when the key is deleted that string may need to be freed
+            // so if that is needed (determined with info) then it will be!
+            key_info := mem.query_info(raw_data(deleted_key), context.allocator)
+            if key_info.size != nil {
+                delete(deleted_key)
+            }
         } else {
             fmt.eprintfln("bug: released an asset that is not in the map (%p)", asset)
         }

@@ -2,6 +2,7 @@ package engine
 
 import "core:strings"
 import "core:os"
+import "core:fmt"
 
 import gl "vendor:OpenGL"
 import "core:math/linalg/glsl"

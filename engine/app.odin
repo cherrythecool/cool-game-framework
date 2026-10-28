@@ -1,8 +1,11 @@
 package engine
 
+import "core:math"
+import "base:runtime"
 import "core:time"
 import "core:fmt"
 import "core:log"
+import "core:mem"
 
 import "core:math/linalg/glsl"
 import "vendor:sdl3"
@@ -31,6 +34,8 @@ AppInitResult :: union {
 App: struct {
     // app state
     running: bool,
+    ctx: runtime.Context,
+    track: mem.Tracking_Allocator,
 
     // rendering / display
     main_display: Display,
@@ -47,6 +52,15 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
     if App.running {
         return AppError { .AppAlreadyExists, "" }
     }
+
+    // https://gist.github.com/karl-zylinski/4ccf438337123e7c8994df3b03604e33
+    when ODIN_DEBUG {
+		mem.tracking_allocator_init(&App.track, context.allocator)
+		context.allocator = mem.tracking_allocator(&App.track)
+	}
+
+    context.logger = log.create_console_logger()
+    App.ctx = context
 
     App.running = true
     App.content_size = { f32(config.content_size.x), f32(config.content_size.y) }
@@ -96,6 +110,8 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
     renderer.default_quad = renderer_make_quad(&App.main_display)
     renderer.projection_matrix = glsl.mat4Ortho3d(0, App.content_size.x, App.content_size.y, 0, -1, 1)
 
+    assets_init()
+
     return nil
 }
 
@@ -105,6 +121,28 @@ app_deinit :: proc() {
     display_deinit(&App.main_display)
     sound_device_deinit()
     sdl3.Quit()
+
+    log.destroy_console_logger(App.ctx.logger)
+
+    when ODIN_DEBUG {
+        if len(App.track.allocation_map) > 0 {
+            fmt.eprintf("=== %v allocations leaked: ===\n", len(App.track.allocation_map))
+            for _, entry in App.track.allocation_map {
+                fmt.eprintf("- %v bytes @ %v\n", entry.size, entry.location)
+            }
+        }
+
+        if len(App.track.bad_free_array) > 0 {
+            fmt.eprintf("=== %v incorrect frees: ===\n", len(App.track.bad_free_array))
+            for entry in App.track.bad_free_array {
+                fmt.eprintf("- %p @ %v\n", entry.memory, entry.location)
+            }
+        }
+
+        mem.tracking_allocator_destroy(&App.track)
+    }
+
+    App = {}
 }
 
 app_run :: proc() {
@@ -152,9 +190,9 @@ app_poll :: proc() {
                 App.window_size = {w, h}
 
                 if (f32(w) / f32(h) > f32(App.content_size.x) / f32(App.content_size.y)) {
-                    w = i32(f32(App.content_size.x) * (f32(h) / f32(App.content_size.y)))
+                    w = auto_cast math.round(f32(App.content_size.x) * (f32(h) / f32(App.content_size.y)))
                 } else {
-                    h = i32(f32(App.content_size.y) * (f32(w) / f32(App.content_size.x)))
+                    h = auto_cast math.round(f32(App.content_size.y) * (f32(w) / f32(App.content_size.x)))
                 }
 
                 App.viewport.z = w

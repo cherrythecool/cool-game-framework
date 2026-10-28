@@ -1,6 +1,6 @@
-# cgf (cool-game-framework)
+# cosmo
 
-placeholder name and very wip project with like nothing in it yet lol
+very wip game engine / framework thingy
 
 ## builds
 
