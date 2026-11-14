@@ -2,6 +2,10 @@ local bunny
 
 print("LOADED SCRIPT")
 
+function sex(number)
+    print("SEX " .. tostring(number + 1))
+end
+
 function printTable(t, indent)
     if indent == nil then
         indent = ""
@@ -39,6 +43,8 @@ function load()
     printTable(bunny.position, "\t")
     print("bunny.scale = ")
     printTable(bunny.scale, "\t")
+
+    cosmo.playSound("assets/TestSong.ogg")
 end
 
 function update(delta)

@@ -173,6 +173,8 @@ app_run :: proc() {
         timer = f32(f64(sdl3.GetTicksNS()) / 1_000_000.0) / 1000.0
 
         previous_frame = current_frame
+
+        free_all(context.temp_allocator)
     }
 }
 

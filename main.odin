@@ -1,152 +1,10 @@
 package main
 
-import "core:strings"
 import "base:runtime"
-
 import "core:fmt"
-import "core:log"
-import "core:math/rand"
-import "core:mem"
-
 import lua "vendor:lua/5.4"
 
 import "engine"
-
-handle_fatal_lua_error :: proc(state: ^lua.State, err: i32, msg: string) {
-    if err != i32(lua.OK) {
-        fmt.panicf("%s: %s", msg, lua.tostring(state, -1))
-    }
-}
-
-handle_lua_error :: proc(state: ^lua.State, err: i32, msg: string) -> bool {
-    if err != i32(lua.OK) {
-        fmt.eprintfln("%s: %s", msg, lua.tostring(state, -1))
-        return false
-    } else {
-        return true
-    }
-}
-
-lua_call_function_empty :: proc(state: ^lua.State, name: cstring) -> bool {
-    lua.getglobal(state, name)
-
-    if !lua.isfunction(state, -1) {
-        fmt.eprintfln("lua error: '%s' either is not a function or does not exist", name)
-        lua.pop(state, 1)
-        return false
-    } else {
-        err := lua.pcall(state, 0, 0, 0)
-        handle_lua_error(state, err, "failed to call function: ")
-        return err == i32(lua.OK)
-    }
-}
-
-push :: proc {
-    lua.pushboolean,
-    lua.pushcfunction,
-    lua.pushnil,
-    lua.pushnumber,
-    lua.pushstring,
-}
-
-lua_sprite_index :: proc "c" (state: ^lua.State) -> i32 {
-    context = engine.App.ctx
-
-    // index 1 is the obj being indexed
-    property := lua.L_optstring(state, 2, "")
-    lua.pushstring(state, "ptr")
-    lua.gettable(state, 1)
-    sprite_property := cast(^engine.GameObject) lua.touserdata(state, -1)
-    sprite_data := engine.sprite_get_data(sprite_property)
-
-    switch property {
-        case "centered":
-            lua.pushboolean(state, auto_cast sprite_data.centered)
-            return 1
-        case "rotation":
-            lua.pushnumber(state, auto_cast sprite_data.rotation)
-            return 1
-        case "position":
-            lua.newtable(state)
-            lua.pushnumber(state, auto_cast sprite_data.position.x)
-            lua.seti(state, -2, 1)
-            lua.pushnumber(state, auto_cast sprite_data.position.y)
-            lua.seti(state, -2, 2)
-            return 1
-        case "scale":
-            lua.newtable(state)
-            lua.pushnumber(state, auto_cast sprite_data.scale.x)
-            lua.seti(state, -2, 1)
-            lua.pushnumber(state, auto_cast sprite_data.scale.y)
-            lua.seti(state, -2, 2)
-            return 1
-    }
-
-    return 0
-}
-
-lua_new_sprite :: proc "c" (state: ^lua.State) -> i32 {
-    context = engine.App.ctx
-
-    x := lua.L_optnumber(state, 1, 0.0)
-    y := lua.L_optnumber(state, 2, 0.0)
-    has_texture := lua.istable(state, 3)
-
-    texture: Maybe(^engine.Asset) = nil
-    if has_texture {
-        lua.pushstring(state, "ptr")
-        lua.gettable(state, 3)
-        texture = cast(^engine.Asset) lua.touserdata(state, -1)
-    }
-
-    sprite := engine.sprite_init(texture)
-    data := engine.sprite_get_data(&sprite)
-    data.position.xy = {auto_cast x, auto_cast y}
-    sprite_cloned := new_clone(sprite)
-    
-    lua.newtable(state)
-    lua.pushlightuserdata(state, sprite_cloned)
-    lua.setfield(state, -2, "ptr")
-
-    lua.newtable(state)
-    lua.pushcfunction(state, lua_sprite_index)
-    lua.setfield(state, -2, "__index")
-    lua.setmetatable(state, -2)
-
-    return 1
-}
-
-lua_get_texture :: proc "c" (state: ^lua.State) -> i32 {
-    context = engine.App.ctx
-
-    path := lua.L_optstring(state, 1, "assets/dog.png")
-    path_str := strings.clone_from(path)
-    texture := engine.assets_get_texture(path_str)
-
-    if texture == nil {
-        lua.pushnil(state)
-    } else {
-        lua.newtable(state)
-        lua.pushlightuserdata(state, texture.(^engine.Asset))
-        lua.setfield(state, -2, "ptr")
-    }
-
-    return 1
-}
-
-lua_push_object :: proc "c" (state: ^lua.State) -> i32 {
-    context = engine.App.ctx
-
-    lua.getfield(state, 1, "ptr")
-    sprite_ptr := cast(^engine.GameObject) lua.touserdata(state, -1)
-    defer free(sprite_ptr)
-
-    append(&engine.App.current_scene.objects, sprite_ptr^)
-    lua.pushlightuserdata(state, &engine.App.current_scene.objects[len(engine.App.current_scene.objects) - 1])
-    lua.setfield(state, 1, "ptr")
-
-    return 0
-}
 
 main :: proc() {
     app_result := engine.app_init({
@@ -167,25 +25,13 @@ main :: proc() {
             fmt.panicf("Failed to initialize app renderer, error: %v", result)
     }
 
-    state := lua.L_newstate()
-    defer lua.close(state)
-    lua.L_openlibs(state)
+    main_script := engine.script_init("game/test_scene.lua")
+    defer engine.script_deinit(&main_script)
 
-    cosmo_lib := []lua.L_Reg {
-        {"newSprite", lua_new_sprite},
-        {"getTexture", lua_get_texture},
-        {"pushObject", lua_push_object},
-        {nil, nil},
-    }
-
-    lua.L_newlib(state, cosmo_lib)
-    lua.setglobal(state, "cosmo")
-
-    handle_fatal_lua_error(state, lua.L_dofile(state, "game/test_scene.lua"), "failed to load lua file")
-
-    lua_call_function_empty(state, "new")
-    defer lua_call_function_empty(state, "free")
-    lua_call_function_empty(state, "load")
+    engine.lua_call_function_empty(main_script.state, "new")
+    defer engine.lua_call_function_empty(main_script.state, "free")
+    engine.lua_call_function_empty(main_script.state, "load")
+    engine.script_call_function(&main_script, "sex", 1)
 
     engine.app_run()
 }
