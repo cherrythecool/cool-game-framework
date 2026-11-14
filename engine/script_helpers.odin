@@ -15,6 +15,7 @@ Script :: struct {
     {"getTexture", lua_get_texture},
     {"pushObject", lua_push_object},
     {"playSound", lua_play_sound},
+    {"getTime", lua_get_time},
     {nil, nil},
 }
 
@@ -39,7 +40,7 @@ script_load_binds :: proc(script: ^Script) {
 
 ScriptCallArgument :: union {
     lua.Integer,
-    lua.Number,
+    f64,
     cstring,
     bool,
     rawptr,
@@ -80,8 +81,8 @@ push_arguments :: proc(script: ^Script, args: []ScriptCallArgument) {
         switch value in arg {
             case lua.Integer:
                 push_argument(script, value)
-            case lua.Number:
-                push_argument(script, value)
+            case f64:
+                push_argument(script, cast(lua.Number) value)
             case cstring:
                 push_argument(script, value)
             case bool:
@@ -134,26 +135,17 @@ script_call_function :: proc(script: ^Script, name: cstring, args: ..ScriptCallA
     }
 }
 
-lua_call_function_empty :: proc(state: ^lua.State, name: cstring) -> bool {
-    lua.getglobal(state, name)
-
-    if !lua.isfunction(state, -1) {
-        fmt.eprintfln("lua error: '%s' either is not a function or does not exist", name)
-        lua.pop(state, 1)
-        return false
-    } else {
-        err := lua.pcall(state, 0, 0, 0)
-        handle_lua_error(state, err, "failed to call function: ")
-        return err == i32(lua.OK)
-    }
-}
-
 @(private="package") script_push_value :: proc {
     lua.pushboolean,
     lua.pushcfunction,
     lua.pushnil,
     lua.pushnumber,
     lua.pushstring,
+}
+
+@(private) lua_get_time :: proc "c" (state: ^lua.State) -> i32 {
+    script_push_value(state, cast(lua.Number) app_get_time())
+    return 1
 }
 
 @(private) lua_play_sound :: proc "c" (state: ^lua.State) -> i32 {
@@ -166,6 +158,65 @@ lua_call_function_empty :: proc(state: ^lua.State, name: cstring) -> bool {
             sound_device_resume_playback()
         case SoundStreamInitError:
             fmt.eprintln("failed to load sound stream:", value)
+    }
+
+    return 0
+}
+
+@(private) lua_vec2_index :: proc "c" (state: ^lua.State) -> i32 {
+    lua.pushstring(state, "ptr")
+    lua.gettable(state, 1)
+    vector := cast(^[2]f32) lua.touserdata(state, -1)
+
+    if lua.isinteger(state, 2) {
+        index := lua.L_optinteger(state, 2, -1)
+        switch index {
+            case 1:
+                lua.pushnumber(state, auto_cast vector.x)
+                return 1
+            case 2:
+                lua.pushnumber(state, auto_cast vector.y)
+                return 1
+        }
+    } else {
+        index := lua.L_optstring(state, 2, "")
+        switch index {
+            case "x":
+                lua.pushnumber(state, auto_cast vector.x)
+                return 1
+            case "y":
+                lua.pushnumber(state, auto_cast vector.y)
+                return 1
+        }
+    }
+
+    lua.pushnil(state)
+    return 0
+}
+
+@(private) lua_vec2_newindex :: proc "c" (state: ^lua.State) -> i32 {
+    lua.pushstring(state, "ptr")
+    lua.gettable(state, 1)
+    vector := cast(^[2]f32) lua.touserdata(state, -1)
+
+    value := lua.L_optnumber(state, 3, 0)
+
+    if lua.isinteger(state, 2) {
+        index := lua.L_optinteger(state, 2, -1)
+        switch index {
+            case 1:
+                vector.x = auto_cast value
+            case 2:
+                vector.y = auto_cast value
+        }
+    } else {
+        index := lua.L_optstring(state, 2, "")
+        switch index {
+            case "x":
+                vector.x = auto_cast value
+            case "y":
+                vector.y = auto_cast value
+        }
     }
 
     return 0
@@ -190,17 +241,30 @@ lua_call_function_empty :: proc(state: ^lua.State, name: cstring) -> bool {
             return 1
         case "position":
             lua.newtable(state)
-            lua.pushnumber(state, auto_cast sprite_data.position.x)
-            lua.seti(state, -2, 1)
-            lua.pushnumber(state, auto_cast sprite_data.position.y)
-            lua.seti(state, -2, 2)
+
+            lua.pushlightuserdata(state, &sprite_data.position)
+            lua.setfield(state, -2, "ptr")
+
+            lua.newtable(state)
+            lua.pushcfunction(state, lua_vec2_newindex)
+            lua.setfield(state, -2, "__newindex")
+            lua.pushcfunction(state, lua_vec2_index)
+            lua.setfield(state, -2, "__index")
+            lua.setmetatable(state, -2)
             return 1
         case "scale":
             lua.newtable(state)
-            lua.pushnumber(state, auto_cast sprite_data.scale.x)
-            lua.seti(state, -2, 1)
-            lua.pushnumber(state, auto_cast sprite_data.scale.y)
-            lua.seti(state, -2, 2)
+
+            lua.pushlightuserdata(state, &sprite_data.scale)
+            lua.setfield(state, -2, "ptr")
+
+            lua.newtable(state)
+            lua.pushcfunction(state, lua_vec2_newindex)
+            lua.setfield(state, -2, "__newindex")
+            lua.pushcfunction(state, lua_vec2_index)
+            lua.setfield(state, -2, "__index")
+            lua.setmetatable(state, -2)
+
             return 1
     }
 

@@ -1,11 +1,5 @@
 local bunny
 
-print("LOADED SCRIPT")
-
-function sex(number)
-    print("SEX " .. tostring(number + 1))
-end
-
 function printTable(t, indent)
     if indent == nil then
         indent = ""
@@ -21,29 +15,18 @@ function printTable(t, indent)
 end
 
 function new()
-    print("new()")
+    
 end
 
 function free()
     -- free any assets you loaded that aren't tied to a gameobject (thus not automatically managed)
     -- maybe could have a refcounted or smth type thing though w/ metatables, idk
-    print("FREE'd")
 end
 
 function load()
-    print("I AM... LOADING!!!")
     bunny = cosmo.newSprite(640, 360, cosmo.getTexture("assets/bunny.jpg"))
-    printTable(bunny)
     cosmo.pushObject(bunny)
     cosmo.pushObject(cosmo.newSprite(128, 128, cosmo.getTexture("assets/dog.png")))
-
-    print("bunny.centered = " .. tostring(bunny.centered))
-    print("bunny.rotation = " .. tostring(bunny.rotation))
-    print("bunny.position = ")
-    printTable(bunny.position, "\t")
-    print("bunny.scale = ")
-    printTable(bunny.scale, "\t")
-
     cosmo.playSound("assets/TestSong.ogg")
 end
 

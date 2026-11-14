@@ -13,6 +13,7 @@ import gl "vendor:OpenGL"
 
 AppInitConfig :: struct {
     title: cstring,
+    script_file_path: Maybe(string),
     content_size: glsl.ivec2,
     vsync: bool,
 }
@@ -112,6 +113,11 @@ app_init :: proc(config: AppInitConfig) -> AppInitResult {
 
     assets_init()
 
+    switch value in config.script_file_path {
+        case string:
+            App.current_scene = scene_init(value)
+    }
+
     return nil
 }
 
@@ -154,6 +160,8 @@ app_run :: proc() {
     previous_frame := sdl3.GetTicksNS()
     current_frame := sdl3.GetTicksNS()
     delta_seconds: f64 = 0
+
+    scene_ready(&App.current_scene)
 
     for App.running {
         current_frame = sdl3.GetTicksNS()
@@ -254,4 +262,8 @@ app_make_display :: proc(config: DisplayInitConfig) -> union { Display, DisplayE
         case:
             return nil
     }
+}
+
+app_get_time :: proc "contextless" () -> f64 {
+    return f64(sdl3.GetTicksNS()) / f64(sdl3.NS_PER_SECOND)
 }
